@@ -36,7 +36,10 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           server-dir: /baixarjogos/lidraughts/torneios/puxa-torneios-diariamente/
-          local-dir: ./index.html
+          local-dir: ./
+          exclude: |
+            **/*
+            !index.html
           protocol: ftp
           timeout: 30000
 

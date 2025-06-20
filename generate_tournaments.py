@@ -16,22 +16,36 @@ def get_finished_tournaments():
     try:
         response = requests.get(TOURNAMENT_API_URL, params={"status": "finished"})
         response.raise_for_status()
-        tournaments = response.json()
+        # Parsear a resposta como JSON
+        data = response.json()
+        # Verificar se a resposta contém a chave 'finished' e é uma lista
+        if isinstance(data, dict) and 'finished' in data:
+            tournaments = data['finished']
+        elif isinstance(data, list):
+            tournaments = data
+        else:
+            print("Formato de resposta da API inesperado:", type(data))
     except requests.RequestException as e:
         print(f"Erro ao buscar torneios: {e}")
     return tournaments
 
 def is_brazilian_tournament(tournament):
     """Verifica se o torneio é de damas brasileiras."""
+    # Verificar se tournament é um dicionário
+    if not isinstance(tournament, dict):
+        print(f"Torneio inválido, esperado dicionário, recebido: {type(tournament)}")
+        return False
     return tournament.get("variant", {}).get("key") == "brazilian"
 
 def get_tournament_date(tournament):
     """Retorna a data de término do torneio."""
+    if not isinstance(tournament, dict):
+        return None
     try:
         end_date = datetime.fromtimestamp(tournament.get("endsAt", 0) / 1000)
         return end_date.date()
     except Exception as e:
-        print(f"Erro ao parsear data do torneio {tournament.get('id')}: {e}")
+        print(f"Erro ao parsear data do torneio {tournament.get('id', 'desconhecido')}: {e}")
         return None
 
 def read_existing_html():
@@ -47,19 +61,17 @@ def extract_tournaments_from_html(html_content):
     if not html_content:
         return tournaments_by_date
     
-    # Simples parsing para extrair seções de torneios (pode ser melhorado com regex ou parser HTML)
+    # Simples parsing para extrair seções de torneios
     lines = html_content.splitlines()
     current_date = None
     for line in lines:
         if '<h2>' in line and '</h2>' in line:
-            # Ex.: <h2>2025-06-19</h2>
             date_str = line.split('>')[1].split('<')[0]
             try:
                 current_date = datetime.strptime(date_str, "%Y-%m-%d").date()
             except ValueError:
                 current_date = None
         elif '<li><a href="' in line and current_date:
-            # Ex.: <li><a href="https://lidraughts.org/api/tournament/l7pCsRKp/games">Daily Brazilian Arena</a> (ID: l7pCsRKp)</li>
             parts = line.split('href="')[1].split('"')[0]
             tournament_id = parts.split('/')[-2]
             name = line.split('>')[2].split('<')[0]
@@ -178,16 +190,18 @@ def main():
     
     # Busca novos torneios
     tournaments = get_finished_tournaments()
-    new_tournaments_by_date = defaultdict(list)
     
     # Processa torneios brasileiros
+    new_tournaments_by_date = defaultdict(list)
     for tournament in tournaments:
         if not is_brazilian_tournament(tournament):
             continue
         date = get_tournament_date(tournament)
         if not date:
             continue
-        tournament_id = tournament.get("id")
+        tournament_id = tournament.get("id") if isinstance(tournament, dict) else None
+        if not tournament_id:
+            continue
         name = tournament.get("fullName", "Torneio Sem Nome")
         url = GAME_DOWNLOAD_URL.format(tournament_id)
         

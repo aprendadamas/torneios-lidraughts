@@ -54,65 +54,10 @@ jobs:
 
       - name: Commit e Push Alterações
         run: |
-          git config --global user.name "@
-          github-actions"
-          git config --global user.email
-          "actions@github.com"
-          git add .
-          git commit -m "Atualizar index.html com novos torneios" || echo
-          "Sem alterações no arquivo"
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add index.html
+          git commit -m "Atualizar index.html com novos torneios" || echo "Sem alterações para commit"
           git push
         env:
-            source-code: https://github.com/aprendadamas/torneios-lidraughts.git
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      ```
-
-- **Alteração**:
-  - Alterado `server-dir` de `/public_html/`: para garantir que o arquivo seja enviado para o diretório correto do site.
-  - Mantido `state-name: ""` para forçar o upload do `index.html`.
-
-#### 2. Configure as Permissões do Diretório
-Você mencionou que não sabe como configurar as permissões `chmod` 755 para o diretório e 644 para o arquivo. Vou explicar como fazer isso usando um cliente FTP (ex.: FileZilla) ou um painel de controle (ex.: cPanel).
-
-##### Usando FileZilla
-1. **Conecte-se ao servidor**:
-   - Abra o FileZilla e insira:
-     - **Host**: O valor de `FTP_SERVER` (ex.: `ftp.aprendadamas.org`).
-     - **Usuário**: O valor de `FTP_USERNAME`.
-     - **Senha**: O valor de `FTP_PASSWORD`.
-     - **Porta**: 21 (padrão para FTP).
-2. **Navegue ao diretório**:
-   - Vá para `/public_html/baixarjogos/lidraughts/torneios/puxa-torneios-diariamente/`.
-3. **Configure as permissões do diretório**:
-   - Clique com o botão direito na pasta `puxa-torneios-diariamente`.
-   - Selecione **Permissões do arquivo** ou **File Permissions**.
-   - Insira o valor numérico `755` no campo fornecido.
-   - Marque a opção **Recursear em subdiretórios** (se disponível) para aplicar a todos os subdiretórios.
-   - Clique em **OK**.
-4. **Configure as permissões do arquivo (após o upload)**:
-   - Após o `index.html` upload (após executar o workflow), clique com o botão direito no arquivo.
-   - Selecione **Permissões do arquivo**.
-   - Insira `644`.
-   - Clique em **OK**.
-
-##### Usando cPanel
-1. **Acesse o cPanel**:
-   - Faça login no cPanel do seu provedor de hospedagem (ex.: via `https://apprendadamas.org/cpanel`).
-   - Vá para **Gerenciador de Arquivos** (`Gerenciador de Arquivo`).
-2. **Navegue ao diretório**:
-   - Abra `/public_html/baixarjogos/lidraughts/torneios/puxa-torneios-diariamente/`.
-3. **Configure as permissões do diretório**:
-   - Clique com o botão direito na pasta `puxa-torneios-diariamente` e selecione **Alterar permissões - Permissões** ou **Change Permissions**).
-   - Defina as permissões para `755` (marque: Proprietário - Leitura/escrita/execução; Grupo e Público - leitura/execução).
-   - Clique em **Alterar Permissões**.
-4. **Configure as permissões após o upload**:
-   - Após o `index.html` upload, repita o processo para o arquivo, definindo permissões `644** (Proprietário - leitura/escrita; Grupo e Público - leitura).
-
-##### Observação
-Se você não tem acesso ao cPanel ou não consegue alterar permissões via FileZilla, entre em contato com seu provedor de hospedagem e peça para:
-   - Confirmar que o diretório `/public_html/baixarjogos/lidraughts/torneios/puxa-torneios-diariamente/` existe.
-   - Definir permissões 755 para o diretório e 644 para arquivos dentro dele.
-   - Verificar que o usuário FTP tem permissão de escrita no diretório.
-
-#### 3. Verifique as Credenciais FTP
-Você

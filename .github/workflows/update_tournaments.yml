@@ -1,0 +1,45 @@
+name: Atualizar Torneios Diários
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # Roda todo dia à meia-noite UTC
+  workflow_dispatch: # Permite execução manual
+
+jobs:
+  update-tournaments:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Instalar Dependências
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Executar Script Python
+        run: python generate_tournaments.py
+
+      - name: Enviar Arquivo via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: /baixarjogos/lidraughts/torneios/puxa-torneios-diariamente/
+          local-dir: ./
+          include: index.html
+
+      - name: Commit e Push Alterações
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add index.html
+          git commit -m "Atualizar index.html com novos torneios" || echo "Sem alterações para commit"
+          git push

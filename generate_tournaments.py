@@ -77,7 +77,7 @@ def extract_existing_tournaments(html_content):
 
 def generate_html(tournaments):
     """Gera o novo conteúdo HTML, preservando torneios existentes e adicionando novos."""
-    today = datetime.now().strftime("%Y-%m-%d")
+    today = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Timestamp único
     existing_html = read_existing_html() or ""
     existing_tournaments = extract_existing_tournaments(existing_html)
 

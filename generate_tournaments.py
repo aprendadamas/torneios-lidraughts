@@ -76,8 +76,8 @@ def extract_existing_tournaments(html_content):
     return tournaments
 
 def generate_html(tournaments):
-    """Gera o novo conteúdo HTML, preservando torneios existentes e adicionando novos."""
-    today = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Timestamp único
+    """Gera o novo conteúdo HTML, sobrescrevendo completamente o arquivo."""
+    today = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     existing_html = read_existing_html() or ""
     existing_tournaments = extract_existing_tournaments(existing_html)
 
@@ -89,8 +89,8 @@ def generate_html(tournaments):
             new_tournaments.append({"name": tournament["name"], "url": tournament["url"], "download_url": download_url})
             print(f"Novo torneio adicionado: {tournament['name']} - {tournament['url']}")
 
-    if not existing_html:
-        base_html = f"""<!DOCTYPE html>
+    # Construir o HTML completo, sem preservar conteúdo corrompido
+    base_html = f"""<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -120,13 +120,6 @@ def generate_html(tournaments):
         <h2>Atualizado em: {today}</h2>
         <ul class="tournament-list">
 """
-    else:
-        soup = BeautifulSoup(existing_html, "html.parser")
-        day_section = soup.select_one('.day-section')
-        if day_section:
-            base_html = str(soup).rsplit('<div class="day-section"', 1)[0] + f'<div class="day-section"><h2>Atualizado em: {today}</h2><ul class="tournament-list">'
-        else:
-            base_html = existing_html.rsplit('<div class="day-section"', 1)[0] + f'<div class="day-section"><h2>Atualizado em: {today}</h2><ul class="tournament-list">'
 
     section = ""
     download_urls = []

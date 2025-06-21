@@ -27,14 +27,14 @@ jobs:
           pip install requests
 
       - name: Executar Script Python
-        run: python generate_tournaments.py
-
-      - name: Verificar Arquivo Gerado
         run: |
-          echo "Conteúdo do diretório:"
+          echo "Iniciando execução do script Python às $(date -u)"
+          python generate_tournaments.py
+          echo "Script Python concluído. Verificando index.html..."
           ls -la
-          echo "Conteúdo do index.html:"
           cat index.html || echo "Arquivo index.html não encontrado"
+          git status
+          git diff --staged || echo "Nenhuma alteração detectada"
 
       - name: Enviar Arquivo via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
@@ -48,15 +48,17 @@ jobs:
             **/*
             !index.html
           protocol: ftp
-          timeout: 30000
+          timeout: 60000 # 60 segundos
           log-level: verbose
           state-name: ""
 
       - name: Commit e Push Alterações
         run: |
+          echo "Iniciando commit e push às $(date -u)..."
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git add index.html
+          git diff --staged || echo "Nenhuma alteração para commit"
           git commit -m "Atualizar index.html com novos torneios" || echo "Sem alterações para commit"
           git push
         env:

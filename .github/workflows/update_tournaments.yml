@@ -24,7 +24,7 @@ jobs:
       - name: Instalar Dependências
         run: |
           python -m pip install --upgrade pip
-          pip install requests
+          pip install requests beautifulsoup4
 
       - name: Executar Script Python
         run: |
@@ -58,8 +58,8 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git add index.html
-          git diff --staged || echo "Nenhuma alteração para commit"
-          git commit -m "Atualizar index.html com novos torneios" || echo "Sem alterações para commit"
+          git diff --staged || echo "Nenhuma alteração detectada"
+          git commit -m "Atualizar index.html com novos torneios em $(date -u)" || echo "Forçando commit mesmo sem alterações"
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

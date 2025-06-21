@@ -57,20 +57,36 @@ def read_existing_html():
 
 def extract_existing_tournaments(html_content):
     """Extrai torneios existentes do HTML para evitar duplicatas."""
-    tournaments = set()
+    tournaments = {}
     if not html_content:
         return tournaments
     soup = BeautifulSoup(html_content, "html.parser")
-    for a in soup.select('a[href]'):
-        url = a["href"]
-        if "/tournament/" in url:
-            tournaments.add(url)
+    for li in soup.select('.tournament-list li'):
+        a_tags = li.find_all('a')
+        if len(a_tags) >= 2:
+            tournament_url = a_tags[0]['href']
+            download_url = a_tags[1]['href']
+            name = a_tags[0].get_text(strip=True)
+            tournaments[tournament_url] = {"name": name, "download_url": download_url}
     return tournaments
 
 def generate_html(tournaments):
-    """Gera o novo conteúdo HTML com os torneios."""
+    """Gera o novo conteúdo HTML, preservando torneios existentes e adicionando novos."""
     today = datetime.now().strftime("%Y-%m-%d")
-    html_content = f"""<!DOCTYPE html>
+    existing_html = read_existing_html() or ""
+    existing_tournaments = extract_existing_tournaments(existing_html)
+
+    # Adicionar novos torneios
+    new_tournaments = []
+    for tournament in tournaments:
+        if has_games(tournament["url"]) and tournament["url"] not in existing_tournaments:
+            tournament_id = tournament["url"].split("/")[-1]
+            download_url = f"https://lidraughts.org/api/tournament/{tournament_id}/games"
+            new_tournaments.append({"name": tournament["name"], "url": tournament["url"], "download_url": download_url})
+
+    # Construir o HTML
+    if not existing_html:
+        base_html = f"""<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -94,21 +110,31 @@ def generate_html(tournaments):
     <h1>Torneios Diários de Damas Brasileiras - Lidraughts</h1>
     <div class="instructions">
         <h2>Como Baixar Partidas</h2>
-        <p>Esta página lista os torneios de damas brasileiras realizados no Lidraughts nos últimos 365 dias. Clique nos links para baixar as partidas em formato PGN. Use um software de damas (ex.: Damas Brasil) para visualizar os jogos.</p>
-        <p>Para encontrar torneios específicos, visite <a href="https://lidraughts.org/tournament" target="_blank">lidraughts.org/tournament</a>, clique na aba "Finished", e procure por torneios com "Brazilian" no nome. O ID do torneio está na URL (ex.: <code>abc123xy</code> em <code>https://lidraughts.org/tournament/abc123xy</code>).</p>
+        <p>Esta página lista os torneios de damas brasileiras realizados no Lidraughts nos últimos 365 dias. Clique no primeiro link para ver o torneio e no segundo para baixar as partidas em formato PGN. Use um software de damas (ex.: Damas Brasil) para visualizar.</p>
+        <p>Para encontrar torneios específicos, visite <a href="https://lidraughts.org/tournament" target="_blank">lidraughts.org/tournament</a>, clique na aba "Finished", e procure por torneios com "Brazilian".</p>
     </div>
     <div class="day-section">
         <h2>Atualizado em: {today}</h2>
         <ul class="tournament-list">
 """
+    else:
+        soup = BeautifulSoup(existing_html, "html.parser")
+        day_section = soup.select_one('.day-section')
+        if day_section:
+            base_html = str(day_section.parent).replace(str(day_section), f'<div class="day-section"><h2>Atualizado em: {today}</h2><ul class="tournament-list">')
+        else:
+            base_html = existing_html.rsplit('<div class="day-section">', 1)[0] + f'<div class="day-section"><h2>Atualizado em: {today}</h2><ul class="tournament-list">'
+
+    # Adicionar torneios existentes e novos
     section = ""
-    existing_tournaments = extract_existing_tournaments(read_existing_html())
-    for tournament in tournaments:
-        if has_games(tournament["url"]) and tournament["url"] not in existing_tournaments:
-            section += f'            <li><a href="{tournament["url"]}">{tournament["name"]}</a></li>\n'
+    for url, data in existing_tournaments.items():
+        section += f'            <li><a href="{url}">{data["name"]}</a> - <a href="{data["download_url"]}">Download</a></li>\n'
+    for tournament in new_tournaments:
+        section += f'            <li><a href="{tournament["url"]}">{tournament["name"]}</a> - <a href="{tournament["download_url"]}">Download</a></li>\n'
     if not section:
         section = "            <li>Nenhum torneio Brazilian com jogos disponíveis hoje.</li>\n"
-    new_html = html_content + section + """        </ul>
+
+    new_html = base_html + section + """        </ul>
         <a href="#" class="download-all">Baixar Todos (Em Breve)</a>
     </div>
     <footer>
@@ -116,7 +142,7 @@ def generate_html(tournaments):
     </footer>
 </body>
 </html>
-"""
+""" if not existing_html else base_html + section + str(soup.select_one('footer').find_parent('body'))
     print(f"Conteúdo gerado do index.html:\n{new_html}")  # Depuração
     return new_html
 

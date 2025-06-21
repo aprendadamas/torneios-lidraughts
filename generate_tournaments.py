@@ -36,6 +36,8 @@ def extract_tournaments(html_content):
             name = text.split("Brazilian")[0].strip()
             if name:  # Só adicionar se houver nome válido
                 tournaments.append({"name": name, "url": url})
+                print(f"Torneio encontrado: {name} - {url}")  # Depuração
+    print(f"Total de torneios encontrados: {len(tournaments)}")  # Depuração
     return tournaments
 
 def has_games(tournament_url):
@@ -71,6 +73,7 @@ def extract_existing_tournaments(html_content):
             download_url = a_tags[1]['href']
             name = a_tags[0].get_text(strip=True)
             tournaments[tournament_url] = {"name": name, "download_url": download_url}
+    print(f"Torneios existentes encontrados: {len(tournaments)}")  # Depuração
     return tournaments
 
 def generate_html(tournaments):
@@ -86,6 +89,7 @@ def generate_html(tournaments):
             tournament_id = tournament["url"].split("/")[-1]
             download_url = f"https://lidraughts.org/api/tournament/{tournament_id}/games"
             new_tournaments.append({"name": tournament["name"], "url": tournament["url"], "download_url": download_url})
+            print(f"Novo torneio adicionado: {tournament['name']} - {tournament['url']}")  # Depuração
 
     # Construir o HTML
     if not existing_html:
@@ -142,7 +146,7 @@ def generate_html(tournaments):
     # Adicionar botão "Baixar Todos" com links concatenados
     download_all_link = "#"
     if download_urls:
-        download_all_link = ";".join(download_urls)  # Concatenar URLs (nota: navegadores podem não suportar múltiplos downloads diretos)
+        download_all_link = ";".join(download_urls)  # Placeholder para múltiplos downloads
 
     new_html = base_html + section + f"""        </ul>
         <a href="{download_all_link}" class="download-all">Baixar Todos</a>

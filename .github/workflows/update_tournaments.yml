@@ -1,138 +1,65 @@
-import requests
-from datetime import datetime, timedelta
-import os
-from bs4 import BeautifulSoup
-from collections import defaultdict
+name: Atualizar Torneios Diários
 
-# Configurações
-TOURNAMENT_PAGE_URL = "https://lidraughts.org/tournament"
-OUTPUT_FILE = "index.html"
-DAYS_TO_KEEP = 365
+on:
+  schedule:
+    - cron: "0 0 * * *" # Roda todo dia à meia-noite UTC
+  workflow_dispatch: # Permite execução manual
 
-def get_tournament_page():
-    """Faz o request para a página de torneios do Lidraughts."""
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    }
-    try:
-        response = requests.get(TOURNAMENT_PAGE_URL, headers=headers, timeout=10)
-        response.raise_for_status()
-        return response.text
-    except requests.RequestException as e:
-        print(f"Erro ao acessar a página de torneios: {e}")
-        return None
+permissions:
+  contents: write # Permite que o workflow faça push no repositório
 
-def extract_tournaments(html_content):
-    """Extrai torneios 'Brazilian' da página HTML."""
-    if not html_content:
-        return []
-    soup = BeautifulSoup(html_content, "html.parser")
-    tournaments = []
-    for a in soup.select('a[href^="/tournament/"]'):
-        text = a.get_text(strip=True)
-        if "Brazilian" in text:
-            url = "https://lidraughts.org" + a["href"]
-            tournaments.append({"name": text, "url": url})
-    return tournaments
+jobs:
+  update-tournaments:
+    runs-on: ubuntu-latest
 
-def has_games(tournament_url):
-    """Verifica se o torneio tem jogos disponíveis."""
-    tournament_id = tournament_url.split("/")[-1]
-    game_url = f"https://lidraughts.org/api/tournament/{tournament_id}/games"
-    try:
-        response = requests.get(game_url, timeout=10)
-        response.raise_for_status()
-        content = response.text.strip()
-        return len(content) > 0
-    except requests.RequestException as e:
-        print(f"Erro ao verificar jogos para {tournament_id}: {e}")
-        return False
+    steps:
+      - name: Checkout Repositório
+        uses: actions/checkout@v4
 
-def read_existing_html():
-    """Lê o conteúdo atual do index.html, se existir."""
-    if os.path.exists(OUTPUT_FILE):
-        with open(OUTPUT_FILE, "r", encoding="utf-8") as f:
-            return f.read()
-    return None
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
 
-def extract_existing_tournaments(html_content):
-    """Extrai torneios existentes do HTML para evitar duplicatas."""
-    tournaments = set()
-    if not html_content:
-        return tournaments
-    soup = BeautifulSoup(html_content, "html.parser")
-    for a in soup.select('a[href]'):
-        url = a["href"]
-        if "/tournament/" in url:
-            tournaments.add(url)
-    return tournaments
+      - name: Instalar Dependências
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4
 
-def generate_html(tournaments):
-    """Gera o novo conteúdo HTML com os torneios."""
-    today = datetime.now().strftime("%Y-%m-%d")
-    html_template = f"""<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Torneios Diários de Damas Brasileiras - Aprenda Damas</title>
-    <style>
-        body {{ font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.6; }}
-        h1, h2 {{ color: #333; }}
-        .day-section {{ margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px; }}
-        .tournament-list {{ list-style-type: none; padding: 0; }}
-        .tournament-list li {{ margin-bottom: 10px; }}
-        a {{ color: #0066cc; text-decoration: none; }}
-        a:hover {{ text-decoration: underline; }}
-        .download-all {{ background-color: #0066cc; color: white; padding: 8px 12px; border-radius: 4px; display: inline-block; margin-top: 10px; }}
-        .download-all:hover {{ background-color: #004c99; text-decoration: none; }}
-        .instructions {{ background-color: #f9f9f9; padding: 15px; border-left: 4px solid #0066cc; margin-bottom: 20px; }}
-        code {{ background-color: #eee; padding: 2px 4px; border-radius: 3px; }}
-    </style>
-</head>
-<body>
-    <h1>Torneios Diários de Damas Brasileiras - Lidraughts</h1>
-    <div class="instructions">
-        <h2>Como Baixar Partidas</h2>
-        <p>Esta página lista os torneios de damas brasileiras realizados no Lidraughts nos últimos 365 dias. Clique nos links para baixar as partidas em formato PGN. Use um software de damas (ex.: Damas Brasil) para visualizar os jogos.</p>
-        <p>Para encontrar torneios específicos, visite <a href="https://lidraughts.org/tournament" target="_blank">lidraughts.org/tournament</a>, clique na aba "Finished", e procure por torneios com "Brazilian" no nome. O ID do torneio está na URL (ex.: <code>abc123xy</code> em <code>https://lidraughts.org/tournament/abc123xy</code>).</p>
-    </div>
-    <div class="day-section">
-        <h2>Atualizado em: {today}</h2>
-        <ul class="tournament-list">
-"""
-    html_template_end = """        </ul>
-        <a href="#" class="download-all">Baixar Todos (Em Breve)</a>
-    </div>
-    <footer>
-        <p>Atualizado diariamente por <a href="https://www.aprendadamas.org">Aprenda Damas</a>. Dados fornecidos por <a href="https://lidraughts.org">Lidraughts.org</a>.</p>
-    </footer>
-</body>
-</html>
-"""
-    section = ""
-    existing_tournaments = extract_existing_tournaments(read_existing_html())
-    for tournament in tournaments:
-        if has_games(tournament["url"]) and tournament["url"] not in existing_tournaments:
-            section += f'            <li><a href="{tournament["url"]}">{tournament["name"]}</a></li>\n'
-    if not section:
-        section = "            <li>Nenhum torneio Brazilian com jogos disponíveis hoje.</li>\n"
-    new_html = html_template + section + html_template_end
-    print(f"Conteúdo gerado do index.html:\n{new_html}")  # Depuração
-    return new_html
+      - name: Executar Script Python
+        run: |
+          echo "Iniciando execução do script Python às $(date -u)"
+          python generate_tournaments.py
+          echo "Script Python concluído. Verificando index.html..."
+          ls -la
+          cat index.html || echo "Arquivo index.html não encontrado"
+          git status
+          git diff --staged || echo "Nenhuma alteração detectada"
 
-def main():
-    html_content = get_tournament_page()
-    if not html_content:
-        print("Falha ao obter a página de torneios. Usando HTML existente.")
-        html_content = read_existing_html() or ""
-    tournaments = extract_tournaments(html_content)
-    if not tournaments:
-        print("Nenhum torneio Brazilian encontrado na página.")
-    new_html = generate_html(tournaments)
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        f.write(new_html)
-    print(f"Arquivo {OUTPUT_FILE} atualizado com sucesso!")
+      - name: Enviar Arquivo via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: /public_html/baixarjogos/lidraughts/torneios/puxa-torneios-diariamente/
+          local-dir: ./
+          exclude: |
+            **/*
+            !index.html
+          protocol: ftp
+          timeout: 60000 # 60 segundos
+          log-level: verbose
+          state-name: ""
 
-if __name__ == "__main__":
-    main()
+      - name: Commit e Push Alterações
+        run: |
+          echo "Iniciando commit e push às $(date -u)..."
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add index.html
+          git diff --staged || echo "Nenhuma alteração detectada"
+          git commit -m "Atualizar index.html com novos torneios em $(date -u)" || echo "Forçando commit mesmo sem alterações"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

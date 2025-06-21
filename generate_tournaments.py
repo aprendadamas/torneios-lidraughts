@@ -157,6 +157,7 @@ def generate_html(tournaments):
 </body>
 </html>
 """
+    print(f"Arquivo a ser salvo: {OUTPUT_FILE}")  # Depuração
     print(f"Conteúdo gerado do index.html:\n{new_html}")  # Depuração
     return new_html
 
@@ -171,7 +172,7 @@ def main():
     new_html = generate_html(tournaments)
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         f.write(new_html)
-    print(f"Arquivo {OUTPUT_FILE} atualizado com sucesso!")
+    print(f"Arquivo {OUTPUT_FILE} salvo com sucesso!")
 
 if __name__ == "__main__":
     main()

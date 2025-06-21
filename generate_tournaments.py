@@ -32,12 +32,11 @@ def extract_tournaments(html_content):
         text = a.get_text(strip=True)
         if "Brazilian" in text:
             url = "https://lidraughts.org" + a["href"]
-            # Extrair apenas o nome do torneio (antes de "Brazilian")
             name = text.split("Brazilian")[0].strip()
-            if name:  # Só adicionar se houver nome válido
+            if name:
                 tournaments.append({"name": name, "url": url})
-                print(f"Torneio encontrado: {name} - {url}")  # Depuração
-    print(f"Total de torneios encontrados: {len(tournaments)}")  # Depuração
+                print(f"Torneio encontrado: {name} - {url}")
+    print(f"Total de torneios encontrados: {len(tournaments)}")
     return tournaments
 
 def has_games(tournament_url):
@@ -73,7 +72,7 @@ def extract_existing_tournaments(html_content):
             download_url = a_tags[1]['href']
             name = a_tags[0].get_text(strip=True)
             tournaments[tournament_url] = {"name": name, "download_url": download_url}
-    print(f"Torneios existentes encontrados: {len(tournaments)}")  # Depuração
+    print(f"Torneios existentes encontrados: {len(tournaments)}")
     return tournaments
 
 def generate_html(tournaments):
@@ -82,16 +81,14 @@ def generate_html(tournaments):
     existing_html = read_existing_html() or ""
     existing_tournaments = extract_existing_tournaments(existing_html)
 
-    # Adicionar novos torneios
     new_tournaments = []
     for tournament in tournaments:
         if has_games(tournament["url"]) and tournament["url"] not in existing_tournaments:
             tournament_id = tournament["url"].split("/")[-1]
             download_url = f"https://lidraughts.org/api/tournament/{tournament_id}/games"
             new_tournaments.append({"name": tournament["name"], "url": tournament["url"], "download_url": download_url})
-            print(f"Novo torneio adicionado: {tournament['name']} - {tournament['url']}")  # Depuração
+            print(f"Novo torneio adicionado: {tournament['name']} - {tournament['url']}")
 
-    # Construir o HTML
     if not existing_html:
         base_html = f"""<!DOCTYPE html>
 <html lang="pt-BR">
@@ -131,7 +128,6 @@ def generate_html(tournaments):
         else:
             base_html = existing_html.rsplit('<div class="day-section"', 1)[0] + f'<div class="day-section"><h2>Atualizado em: {today}</h2><ul class="tournament-list">'
 
-    # Adicionar torneios existentes e novos
     section = ""
     download_urls = []
     for url, data in existing_tournaments.items():
@@ -143,10 +139,9 @@ def generate_html(tournaments):
     if not section:
         section = "            <li>Nenhum torneio Brazilian com jogos disponíveis hoje.</li>\n"
 
-    # Adicionar botão "Baixar Todos" com links concatenados
     download_all_link = "#"
     if download_urls:
-        download_all_link = ";".join(download_urls)  # Placeholder para múltiplos downloads
+        download_all_link = ";".join(download_urls)
 
     new_html = base_html + section + f"""        </ul>
         <a href="{download_all_link}" class="download-all">Baixar Todos</a>
@@ -157,8 +152,7 @@ def generate_html(tournaments):
 </body>
 </html>
 """
-    print(f"Arquivo a ser salvo: {OUTPUT_FILE}")  # Depuração
-    print(f"Conteúdo gerado do index.html:\n{new_html}")  # Depuração
+    print(f"Conteúdo gerado do index.html:\n{new_html}")
     return new_html
 
 def main():
@@ -172,7 +166,7 @@ def main():
     new_html = generate_html(tournaments)
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         f.write(new_html)
-    print(f"Arquivo {OUTPUT_FILE} salvo com sucesso!")
+    print(f"Arquivo {OUTPUT_FILE} salvo com sucesso no caminho: {os.path.abspath(OUTPUT_FILE)}")
 
 if __name__ == "__main__":
     main()

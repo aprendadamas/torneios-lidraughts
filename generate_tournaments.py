@@ -32,7 +32,10 @@ def extract_tournaments(html_content):
         text = a.get_text(strip=True)
         if "Brazilian" in text:
             url = "https://lidraughts.org" + a["href"]
-            tournaments.append({"name": text, "url": url})
+            # Extrair apenas o nome do torneio (antes de "Brazilian")
+            name = text.split("Brazilian")[0].strip()
+            if name:  # Só adicionar se houver nome válido
+                tournaments.append({"name": name, "url": url})
     return tournaments
 
 def has_games(tournament_url):
@@ -102,16 +105,15 @@ def generate_html(tournaments):
         a:hover {{ text-decoration: underline; }}
         .download-all {{ background-color: #0066cc; color: white; padding: 8px 12px; border-radius: 4px; display: inline-block; margin-top: 10px; }}
         .download-all:hover {{ background-color: #004c99; text-decoration: none; }}
-        .instructions {{ background-color: #f9f9f9; padding: 15px; border-left: 4px solid #0066cc; margin-bottom: 20px; }}
-        code {{ background-color: #eee; padding: 2px 4px; border-radius: 3px; }}
+        .marketing {{ background-color: #25d366; color: white; padding: 10px; text-align: center; margin: 10px 0; border-radius: 5px; }}
+        .marketing a {{ color: white; text-decoration: none; font-weight: bold; }}
+        .marketing a:hover {{ text-decoration: underline; }}
     </style>
 </head>
 <body>
     <h1>Torneios Diários de Damas Brasileiras - Lidraughts</h1>
-    <div class="instructions">
-        <h2>Como Baixar Partidas</h2>
-        <p>Esta página lista os torneios de damas brasileiras realizados no Lidraughts nos últimos 365 dias. Clique no primeiro link para ver o torneio e no segundo para baixar as partidas em formato PGN. Use um software de damas (ex.: Damas Brasil) para visualizar.</p>
-        <p>Para encontrar torneios específicos, visite <a href="https://lidraughts.org/tournament" target="_blank">lidraughts.org/tournament</a>, clique na aba "Finished", e procure por torneios com "Brazilian".</p>
+    <div class="marketing">
+        📱 <a href="https://wa.me/27988750076" target="_blank">Adquira o Programa Aurora Borealis - WhatsApp 27 98875-0076</a>
     </div>
     <div class="day-section">
         <h2>Atualizado em: {today}</h2>
@@ -121,28 +123,36 @@ def generate_html(tournaments):
         soup = BeautifulSoup(existing_html, "html.parser")
         day_section = soup.select_one('.day-section')
         if day_section:
-            base_html = str(day_section.parent).replace(str(day_section), f'<div class="day-section"><h2>Atualizado em: {today}</h2><ul class="tournament-list">')
+            base_html = str(soup).rsplit('<div class="day-section"', 1)[0] + f'<div class="day-section"><h2>Atualizado em: {today}</h2><ul class="tournament-list">'
         else:
-            base_html = existing_html.rsplit('<div class="day-section">', 1)[0] + f'<div class="day-section"><h2>Atualizado em: {today}</h2><ul class="tournament-list">'
+            base_html = existing_html.rsplit('<div class="day-section"', 1)[0] + f'<div class="day-section"><h2>Atualizado em: {today}</h2><ul class="tournament-list">'
 
     # Adicionar torneios existentes e novos
     section = ""
+    download_urls = []
     for url, data in existing_tournaments.items():
         section += f'            <li><a href="{url}">{data["name"]}</a> - <a href="{data["download_url"]}">Download</a></li>\n'
+        download_urls.append(data["download_url"])
     for tournament in new_tournaments:
         section += f'            <li><a href="{tournament["url"]}">{tournament["name"]}</a> - <a href="{tournament["download_url"]}">Download</a></li>\n'
+        download_urls.append(tournament["download_url"])
     if not section:
         section = "            <li>Nenhum torneio Brazilian com jogos disponíveis hoje.</li>\n"
 
-    new_html = base_html + section + """        </ul>
-        <a href="#" class="download-all">Baixar Todos (Em Breve)</a>
+    # Adicionar botão "Baixar Todos" com links concatenados
+    download_all_link = "#"
+    if download_urls:
+        download_all_link = ";".join(download_urls)  # Concatenar URLs (nota: navegadores podem não suportar múltiplos downloads diretos)
+
+    new_html = base_html + section + f"""        </ul>
+        <a href="{download_all_link}" class="download-all">Baixar Todos</a>
     </div>
     <footer>
         <p>Atualizado diariamente por <a href="https://www.aprendadamas.org">Aprenda Damas</a>. Dados fornecidos por <a href="https://lidraughts.org">Lidraughts.org</a>.</p>
     </footer>
 </body>
 </html>
-""" if not existing_html else base_html + section + str(soup.select_one('footer').find_parent('body'))
+"""
     print(f"Conteúdo gerado do index.html:\n{new_html}")  # Depuração
     return new_html
 

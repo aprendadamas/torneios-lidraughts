@@ -69,24 +69,25 @@ def extract_existing_tournaments(html_content):
 
 def generate_html(tournaments):
     """Gera o novo conteúdo HTML com os torneios."""
-    html_template_start = """<!DOCTYPE html>
+    today = datetime.now().strftime("%Y-%m-%d")
+    html_content = f"""<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Torneios Diários de Damas Brasileiras - Aprenda Damas</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.6; }
-        h1, h2 { color: #333; }
-        .day-section { margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
-        .tournament-list { list-style-type: none; padding: 0; }
-        .tournament-list li { margin-bottom: 10px; }
-        a { color: #0066cc; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-        .download-all { background-color: #0066cc; color: white; padding: 8px 12px; border-radius: 4px; display: inline-block; margin-top: 10px; }
-        .download-all:hover { background-color: #004c99; text-decoration: none; }
-        .instructions { background-color: #f9f9f9; padding: 15px; border-left: 4px solid #0066cc; margin-bottom: 20px; }
-        code { background-color: #eee; padding: 2px 4px; border-radius: 3px; }
+        body {{ font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.6; }}
+        h1, h2 {{ color: #333; }}
+        .day-section {{ margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px; }}
+        .tournament-list {{ list-style-type: none; padding: 0; }}
+        .tournament-list li {{ margin-bottom: 10px; }}
+        a {{ color: #0066cc; text-decoration: none; }}
+        a:hover {{ text-decoration: underline; }}
+        .download-all {{ background-color: #0066cc; color: white; padding: 8px 12px; border-radius: 4px; display: inline-block; margin-top: 10px; }}
+        .download-all:hover {{ background-color: #004c99; text-decoration: none; }}
+        .instructions {{ background-color: #f9f9f9; padding: 15px; border-left: 4px solid #0066cc; margin-bottom: 20px; }}
+        code {{ background-color: #eee; padding: 2px 4px; border-radius: 3px; }}
     </style>
 </head>
 <body>
@@ -100,7 +101,14 @@ def generate_html(tournaments):
         <h2>Atualizado em: {today}</h2>
         <ul class="tournament-list">
 """
-    html_template_end = """        </ul>
+    section = ""
+    existing_tournaments = extract_existing_tournaments(read_existing_html())
+    for tournament in tournaments:
+        if has_games(tournament["url"]) and tournament["url"] not in existing_tournaments:
+            section += f'            <li><a href="{tournament["url"]}">{tournament["name"]}</a></li>\n'
+    if not section:
+        section = "            <li>Nenhum torneio Brazilian com jogos disponíveis hoje.</li>\n"
+    new_html = html_content + section + """        </ul>
         <a href="#" class="download-all">Baixar Todos (Em Breve)</a>
     </div>
     <footer>
@@ -109,15 +117,6 @@ def generate_html(tournaments):
 </body>
 </html>
 """
-    today = datetime.now().strftime("%Y-%m-%d")
-    section = ""
-    existing_tournaments = extract_existing_tournaments(read_existing_html())
-    for tournament in tournaments:
-        if has_games(tournament["url"]) and tournament["url"] not in existing_tournaments:
-            section += f'            <li><a href="{tournament["url"]}">{tournament["name"]}</a></li>\n'
-    if not section:
-        section = "            <li>Nenhum torneio Brazilian com jogos disponíveis hoje.</li>\n"
-    new_html = html_template_start.format(today=today) + section + html_template_end
     print(f"Conteúdo gerado do index.html:\n{new_html}")  # Depuração
     return new_html
 

@@ -17,6 +17,13 @@ jobs:
     steps:
       - name: Checkout Repositório
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Garantir que todo o histórico seja baixado
+
+      - name: Limpar Ambiente
+        run: |
+          rm -rf *  # Remove todos os arquivos antes de checkout
+          git reset --hard HEAD
 
       - name: Configurar Python
         uses: actions/setup-python@v5
@@ -61,7 +68,7 @@ jobs:
           git config --global user.email "actions@github.com"
           git add index.html
           git diff --staged || echo "Nenhuma alteração detectada"
-          git commit -m "Atualizar index.html com novos torneios em $(date -u +%Y%m%d%H%M%S)" || echo "Forçando commit mesmo sem alterações"
-          git push
+          git commit -m "Atualizar index.html com novos torneios em $(date -u +%Y%m%d%H%M%S)" -m "Forçando commit para garantir atualização" || echo "Commit forçado falhou, mas prosseguindo"
+          git push --force
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

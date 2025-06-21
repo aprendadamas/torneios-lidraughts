@@ -1,71 +1,52 @@
 import requests
 from datetime import datetime, timedelta
-import json
 import os
+from bs4 import BeautifulSoup
 from collections import defaultdict
 
 # Configurações
-TOURNAMENT_API_URL = "https://lidraughts.org/api/tournament"
-GAME_DOWNLOAD_URL = "https://lidraughts.org/api/tournament/{}/games"
+TOURNAMENT_PAGE_URL = "https://lidraughts.org/tournament"
 OUTPUT_FILE = "index.html"
 DAYS_TO_KEEP = 365
 
-def get_finished_tournaments():
-    """Busca torneios finalizados do Lidraughts."""
-    tournaments = []
+def get_tournament_page():
+    """Faz o request para a página de torneios do Lidraughts."""
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
     try:
-        response = requests.get(TOURNAMENT_API_URL, params={"status": "finished"})
+        response = requests.get(TOURNAMENT_PAGE_URL, headers=headers, timeout=10)
         response.raise_for_status()
-        data = response.json()
-        if isinstance(data, dict) and 'finished' in data:
-            tournaments = data['finished']
-        elif isinstance(data, list):
-            tournaments = data
-        else:
-            print("Formato de resposta da API inesperado:", type(data))
+        return response.text
     except requests.RequestException as e:
-        print(f"Erro ao buscar torneios: {e}")
+        print(f"Erro ao acessar a página de torneios: {e}")
+        return None
+
+def extract_tournaments(html_content):
+    """Extrai torneios 'Brazilian' da página HTML."""
+    if not html_content:
+        return []
+    soup = BeautifulSoup(html_content, "html.parser")
+    tournaments = []
+    for a in soup.select('a[href^="/tournament/"]'):
+        text = a.get_text(strip=True)
+        if "Brazilian" in text:
+            url = "https://lidraughts.org" + a["href"]
+            tournaments.append({"name": text, "url": url})
     return tournaments
 
-def has_games(tournament_id):
-    """Verifica se o torneio tem jogos disponíveis com retries."""
-    url = GAME_DOWNLOAD_URL.format(tournament_id)
-    for attempt in range(3):  # Tenta 3 vezes
-        try:
-            response = requests.get(url, timeout=10)
-            response.raise_for_status()
-            content = response.text
-            if len(content.strip()) > 0:
-                print(f"Torneio {tournament_id} tem jogos disponíveis.")
-                return True
-            else:
-                print(f"Torneio {tournament_id} não tem jogos ou API retornou vazio.")
-                return False
-        except requests.RequestException as e:
-            print(f"Tentativa {attempt + 1} falhou para {tournament_id}: {e}")
-            if attempt < 2:
-                import time
-                time.sleep(2)  # Aguarda 2 segundos antes de retry
-    print(f"Todas as tentativas falharam para {tournament_id}.")
-    return False
-
-def is_brazilian_tournament(tournament):
-    """Verifica se o torneio é de damas brasileiras."""
-    if not isinstance(tournament, dict):
-        print(f"Torneio inválido, esperado dicionário, recebido: {type(tournament)}")
-        return False
-    return tournament.get("variant", {}).get("key") == "brazilian"
-
-def get_tournament_date(tournament):
-    """Retorna a data de término do torneio."""
-    if not isinstance(tournament, dict):
-        return None
+def has_games(tournament_url):
+    """Verifica se o torneio tem jogos disponíveis."""
+    tournament_id = tournament_url.split("/")[-1]
+    game_url = f"https://lidraughts.org/api/tournament/{tournament_id}/games"
     try:
-        end_date = datetime.fromtimestamp(tournament.get("endsAt", 0) / 1000)
-        return end_date.date()
-    except Exception as e:
-        print(f"Erro ao parsear data do torneio {tournament.get('id', 'desconhecido')}: {e}")
-        return None
+        response = requests.get(game_url, timeout=10)
+        response.raise_for_status()
+        content = response.text.strip()
+        return len(content) > 0
+    except requests.RequestException as e:
+        print(f"Erro ao verificar jogos para {tournament_id}: {e}")
+        return False
 
 def read_existing_html():
     """Lê o conteúdo atual do index.html, se existir."""
@@ -74,33 +55,20 @@ def read_existing_html():
             return f.read()
     return None
 
-def extract_tournaments_from_html(html_content):
+def extract_existing_tournaments(html_content):
     """Extrai torneios existentes do HTML para evitar duplicatas."""
-    tournaments_by_date = defaultdict(list)
+    tournaments = set()
     if not html_content:
-        return tournaments_by_date
-    lines = html_content.splitlines()
-    current_date = None
-    for line in lines:
-        if '<h2>' in line and '</h2>' in line:
-            date_str = line.split('>')[1].split('<')[0]
-            try:
-                current_date = datetime.strptime(date_str, "%Y-%m-%d").date()
-            except ValueError:
-                current_date = None
-        elif '<li><a href="' in line and current_date:
-            parts = line.split('href="')[1].split('"')[0]
-            tournament_id = parts.split('/')[-2]
-            name = line.split('>')[2].split('<')[0]
-            tournaments_by_date[current_date].append({
-                "id": tournament_id,
-                "name": name,
-                "url": parts
-            })
-    return tournaments_by_date
+        return tournaments
+    soup = BeautifulSoup(html_content, "html.parser")
+    for a in soup.select('a[href]'):
+        url = a["href"]
+        if "/tournament/" in url:
+            tournaments.add(url)
+    return tournaments
 
-def generate_html(tournaments_by_date):
-    """Gera o novo conteúdo HTML com todos os torneios."""
+def generate_html(tournaments):
+    """Gera o novo conteúdo HTML com os torneios."""
     html_template_start = """<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -128,56 +96,40 @@ def generate_html(tournaments_by_date):
         <p>Esta página lista os torneios de damas brasileiras realizados no Lidraughts nos últimos 365 dias. Clique nos links para baixar as partidas em formato PGN. Use um software de damas (ex.: Damas Brasil) para visualizar os jogos.</p>
         <p>Para encontrar torneios específicos, visite <a href="https://lidraughts.org/tournament" target="_blank">lidraughts.org/tournament</a>, clique na aba "Finished", e procure por torneios com "Brazilian" no nome. O ID do torneio está na URL (ex.: <code>abc123xy</code> em <code>https://lidraughts.org/tournament/abc123xy</code>).</p>
     </div>
-    <div id="tournaments">
+    <div class="day-section">
+        <h2>Atualizado em: {today}</h2>
+        <ul class="tournament-list">
 """
-    html_template_end = """    </div>
+    html_template_end = """        </ul>
+        <a href="#" class="download-all">Baixar Todos (Em Breve)</a>
+    </div>
     <footer>
         <p>Atualizado diariamente por <a href="https://www.aprendadamas.org">Aprenda Damas</a>. Dados fornecidos por <a href="https://lidraughts.org">Lidraughts.org</a>.</p>
     </footer>
 </body>
 </html>
 """
-    sections = []
-    today = datetime.now().date()
-    cutoff_date = today - timedelta(days=DAYS_TO_KEEP)
-    for date in sorted(tournaments_by_date.keys(), reverse=True):
-        if date < cutoff_date:
-            continue
-        section = f'        <div class="day-section">\n            <h2>{date}</h2>\n            <ul class="tournament-list">\n'
-        for tournament in tournaments_by_date[date]:
-            section += f'                <li><a href="{tournament["url"]}">{tournament["name"]}</a> (ID: {tournament["id"]})</li>\n'
-        section += f'            </ul>\n            <a href="#" class="download-all">Baixar Todos (Em Breve)</a>\n        </div>'
-        sections.append(section)
-    new_html = html_template_start + "\n".join(sections) + html_template_end
+    today = datetime.now().strftime("%Y-%m-%d")
+    section = ""
+    existing_tournaments = extract_existing_tournaments(read_existing_html())
+    for tournament in tournaments:
+        if has_games(tournament["url"]) and tournament["url"] not in existing_tournaments:
+            section += f'            <li><a href="{tournament["url"]}">{tournament["name"]}</a></li>\n'
+    if not section:
+        section = "            <li>Nenhum torneio Brazilian com jogos disponíveis hoje.</li>\n"
+    new_html = html_template_start.format(today=today) + section + html_template_end
     print(f"Conteúdo gerado do index.html:\n{new_html}")  # Depuração
     return new_html
 
 def main():
-    existing_html = read_existing_html()
-    existing_tournaments = extract_tournaments_from_html(existing_html)
-    tournaments = get_finished_tournaments()
-    new_tournaments_by_date = defaultdict(list)
-    for tournament in tournaments:
-        if not is_brazilian_tournament(tournament):
-            continue
-        date = get_tournament_date(tournament)
-        if not date:
-            continue
-        tournament_id = tournament.get("id")
-        if not tournament_id:
-            continue
-        if has_games(tournament_id):
-            name = tournament.get("fullName", "Torneio Sem Nome")
-            url = GAME_DOWNLOAD_URL.format(tournament_id)
-            if not any(t["id"] == tournament_id for t in existing_tournaments[date]):
-                new_tournaments_by_date[date].append({
-                    "id": tournament_id,
-                    "name": name,
-                    "url": url
-                })
-    for date in new_tournaments_by_date:
-        existing_tournaments[date].extend(new_tournaments_by_date[date])
-    new_html = generate_html(existing_tournaments)
+    html_content = get_tournament_page()
+    if not html_content:
+        print("Falha ao obter a página de torneios. Usando HTML existente.")
+        html_content = read_existing_html() or ""
+    tournaments = extract_tournaments(html_content)
+    if not tournaments:
+        print("Nenhum torneio Brazilian encontrado na página.")
+    new_html = generate_html(tournaments)
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         f.write(new_html)
     print(f"Arquivo {OUTPUT_FILE} atualizado com sucesso!")

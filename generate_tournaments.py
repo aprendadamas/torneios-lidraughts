@@ -16,9 +16,7 @@ def get_finished_tournaments():
     try:
         response = requests.get(TOURNAMENT_API_URL, params={"status": "finished"})
         response.raise_for_status()
-        # Parsear a resposta como JSON
         data = response.json()
-        # Verificar se a resposta contém a chave 'finished' e é uma lista
         if isinstance(data, dict) and 'finished' in data:
             tournaments = data['finished']
         elif isinstance(data, list):
@@ -29,9 +27,30 @@ def get_finished_tournaments():
         print(f"Erro ao buscar torneios: {e}")
     return tournaments
 
+def has_games(tournament_id):
+    """Verifica se o torneio tem jogos disponíveis com retries."""
+    url = GAME_DOWNLOAD_URL.format(tournament_id)
+    for attempt in range(3):  # Tenta 3 vezes
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            content = response.text
+            if len(content.strip()) > 0:
+                print(f"Torneio {tournament_id} tem jogos disponíveis.")
+                return True
+            else:
+                print(f"Torneio {tournament_id} não tem jogos ou API retornou vazio.")
+                return False
+        except requests.RequestException as e:
+            print(f"Tentativa {attempt + 1} falhou para {tournament_id}: {e}")
+            if attempt < 2:
+                import time
+                time.sleep(2)  # Aguarda 2 segundos antes de retry
+    print(f"Todas as tentativas falharam para {tournament_id}.")
+    return False
+
 def is_brazilian_tournament(tournament):
     """Verifica se o torneio é de damas brasileiras."""
-    # Verificar se tournament é um dicionário
     if not isinstance(tournament, dict):
         print(f"Torneio inválido, esperado dicionário, recebido: {type(tournament)}")
         return False
@@ -60,8 +79,6 @@ def extract_tournaments_from_html(html_content):
     tournaments_by_date = defaultdict(list)
     if not html_content:
         return tournaments_by_date
-    
-    # Simples parsing para extrair seções de torneios
     lines = html_content.splitlines()
     current_date = None
     for line in lines:
@@ -80,7 +97,6 @@ def extract_tournaments_from_html(html_content):
                 "name": name,
                 "url": parts
             })
-    
     return tournaments_by_date
 
 def generate_html(tournaments_by_date):
@@ -92,85 +108,38 @@ def generate_html(tournaments_by_date):
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Torneios Diários de Damas Brasileiras - Aprenda Damas</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
-            line-height: 1.6;
-        }
-        h1, h2 {
-            color: #333;
-        }
-        .day-section {
-            margin-bottom: 20px;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 10px;
-        }
-        .tournament-list {
-            list-style-type: none;
-            padding: 0;
-        }
-        .tournament-list li {
-            margin-bottom: 10px;
-        }
-        a {
-            color: #0066cc;
-            text-decoration: none;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-        .download-all {
-            background-color: #0066cc;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 4px;
-            display: inline-block;
-            margin-top: 10px;
-        }
-        .download-all:hover {
-            background-color: #004c99;
-            text-decoration: none;
-        }
-        .instructions {
-            background-color: #f9f9f9;
-            padding: 15px;
-            border-left: 4px solid #0066cc;
-            margin-bottom: 20px;
-        }
-        code {
-            background-color: #eee;
-            padding: 2px 4px;
-            border-radius: 3px;
-        }
+        body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+        h1, h2 { color: #333; }
+        .day-section { margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
+        .tournament-list { list-style-type: none; padding: 0; }
+        .tournament-list li { margin-bottom: 10px; }
+        a { color: #0066cc; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .download-all { background-color: #0066cc; color: white; padding: 8px 12px; border-radius: 4px; display: inline-block; margin-top: 10px; }
+        .download-all:hover { background-color: #004c99; text-decoration: none; }
+        .instructions { background-color: #f9f9f9; padding: 15px; border-left: 4px solid #0066cc; margin-bottom: 20px; }
+        code { background-color: #eee; padding: 2px 4px; border-radius: 3px; }
     </style>
 </head>
 <body>
     <h1>Torneios Diários de Damas Brasileiras - Lidraughts</h1>
-    
     <div class="instructions">
         <h2>Como Baixar Partidas</h2>
         <p>Esta página lista os torneios de damas brasileiras realizados no Lidraughts nos últimos 365 dias. Clique nos links para baixar as partidas em formato PGN. Use um software de damas (ex.: Damas Brasil) para visualizar os jogos.</p>
         <p>Para encontrar torneios específicos, visite <a href="https://lidraughts.org/tournament" target="_blank">lidraughts.org/tournament</a>, clique na aba "Finished", e procure por torneios com "Brazilian" no nome. O ID do torneio está na URL (ex.: <code>abc123xy</code> em <code>https://lidraughts.org/tournament/abc123xy</code>).</p>
     </div>
-
     <div id="tournaments">
 """
     html_template_end = """    </div>
-
     <footer>
         <p>Atualizado diariamente por <a href="https://www.aprendadamas.org">Aprenda Damas</a>. Dados fornecidos por <a href="https://lidraughts.org">Lidraughts.org</a>.</p>
     </footer>
 </body>
 </html>
 """
-
-    # Gera seções por dia
     sections = []
     today = datetime.now().date()
     cutoff_date = today - timedelta(days=DAYS_TO_KEEP)
-    
     for date in sorted(tournaments_by_date.keys(), reverse=True):
         if date < cutoff_date:
             continue
@@ -179,19 +148,14 @@ def generate_html(tournaments_by_date):
             section += f'                <li><a href="{tournament["url"]}">{tournament["name"]}</a> (ID: {tournament["id"]})</li>\n'
         section += f'            </ul>\n            <a href="#" class="download-all">Baixar Todos (Em Breve)</a>\n        </div>'
         sections.append(section)
-    
-    # Combina tudo
-    return html_template_start + "\n".join(sections) + html_template_end
+    new_html = html_template_start + "\n".join(sections) + html_template_end
+    print(f"Conteúdo gerado do index.html:\n{new_html}")  # Depuração
+    return new_html
 
 def main():
-    # Lê torneios existentes do HTML
     existing_html = read_existing_html()
     existing_tournaments = extract_tournaments_from_html(existing_html)
-    
-    # Busca novos torneios
     tournaments = get_finished_tournaments()
-    
-    # Processa torneios brasileiros
     new_tournaments_by_date = defaultdict(list)
     for tournament in tournaments:
         if not is_brazilian_tournament(tournament):
@@ -199,30 +163,21 @@ def main():
         date = get_tournament_date(tournament)
         if not date:
             continue
-        tournament_id = tournament.get("id") if isinstance(tournament, dict) else None
+        tournament_id = tournament.get("id")
         if not tournament_id:
             continue
-        name = tournament.get("fullName", "Torneio Sem Nome")
-        url = GAME_DOWNLOAD_URL.format(tournament_id)
-        
-        # Evita duplicatas
-        if any(t["id"] == tournament_id for t in existing_tournaments[date]):
-            continue
-        
-        new_tournaments_by_date[date].append({
-            "id": tournament_id,
-            "name": name,
-            "url": url
-        })
-    
-    # Combina torneios existentes e novos
+        if has_games(tournament_id):
+            name = tournament.get("fullName", "Torneio Sem Nome")
+            url = GAME_DOWNLOAD_URL.format(tournament_id)
+            if not any(t["id"] == tournament_id for t in existing_tournaments[date]):
+                new_tournaments_by_date[date].append({
+                    "id": tournament_id,
+                    "name": name,
+                    "url": url
+                })
     for date in new_tournaments_by_date:
         existing_tournaments[date].extend(new_tournaments_by_date[date])
-    
-    # Gera novo HTML
     new_html = generate_html(existing_tournaments)
-    
-    # Salva o arquivo
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         f.write(new_html)
     print(f"Arquivo {OUTPUT_FILE} atualizado com sucesso!")

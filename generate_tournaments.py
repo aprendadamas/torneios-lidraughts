@@ -23,10 +23,14 @@ def get_tournament_page():
             response = requests.get(url, headers=headers, timeout=10)
             response.raise_for_status()
             content = response.text
-            if not content or "No tournaments found" in content:
+            soup = BeautifulSoup(content, "html.parser")
+            # Verifica se há torneios na página (procura por links de torneio)
+            tournament_links = soup.select('a[href^="/tournament/"]')
+            if not tournament_links or "No tournaments found" in content:
                 break
             all_content += content
             page += 1
+            print(f"Processando página {page}...")
             time.sleep(2)  # Pausa para evitar bloqueio
         except requests.RequestException as e:
             print(f"Erro ao acessar a página {url}: {e}")
@@ -39,18 +43,21 @@ def extract_tournaments(html_content):
         return []
     soup = BeautifulSoup(html_content, "html.parser")
     tournaments = []
-    today = datetime.now().strftime("%Y.%m.%d")
+    today = datetime.now().strftime("%Y.%m.%d")  # Formato: 2025.06.22
     for a in soup.select('a[href^="/tournament/"]'):
         text = a.get_text(strip=True)
         if "Brazilian" in text:
             # Tenta encontrar a data no texto ou em elementos próximos
-            date_elem = a.find_next(string=lambda t: t and any(d in t for d in ["2025.06.21", today]))
-            if date_elem and today in date_elem:
+            parent = a.find_parent('div', class_=lambda x: x and 'event__header' in x)  # Ajuste conforme estrutura
+            date_elem = parent.find(string=lambda t: t and any(d in t for d in [today, "Today"]))
+            if date_elem:
                 url = "https://lidraughts.org" + a["href"]
                 name = text.split("Brazilian")[0].strip()
                 if name:
                     tournaments.append({"name": name, "url": url})
-                    print(f"Torneio encontrado: {name} - {url}")
+                    print(f"Torneio encontrado: {name} - {url} - Data: {date_elem}")
+            else:
+                print(f"Data não encontrada para torneio: {text} - {a['href']}")
     print(f"Total de torneios encontrados: {len(tournaments)}")
     return tournaments
 
@@ -142,7 +149,7 @@ def generate_html(tournaments):
         section += f'            <li><a href="{url}">{data["name"]}</a> - <a href="{data["download_url"]}">Download</a></li>\n'
         download_urls.append(data["download_url"])
     for tournament in new_tournaments:
-        section += f'            <li><a href="{tournament["url"]}">{tournament["name"]}</a> - <a href="{tournament["download_url"]}">Download</a></li>\n'
+        section += f'            <li><a href="{tournament["url"]}">{tournament["url"]}</a> - <a href="{tournament["download_url"]}">Download</a></li>\n'
         download_urls.append(tournament["download_url"])
     if not section:
         section = "            <li>Nenhum torneio Brazilian com jogos disponíveis hoje.</li>\n"

@@ -47,17 +47,19 @@ def extract_tournaments(html_content):
     for a in soup.select('a[href^="/tournament/"]'):
         text = a.get_text(strip=True)
         if "Brazilian" in text:
-            # Tenta encontrar a data no texto ou em elementos próximos
-            parent = a.find_parent('div', class_=lambda x: x and 'event__header' in x)  # Ajuste conforme estrutura
-            date_elem = parent.find(string=lambda t: t and any(d in t for d in [today, "Today"]))
-            if date_elem:
-                url = "https://lidraughts.org" + a["href"]
-                name = text.split("Brazilian")[0].strip()
-                if name:
-                    tournaments.append({"name": name, "url": url})
-                    print(f"Torneio encontrado: {name} - {url} - Data: {date_elem}")
-            else:
-                print(f"Data não encontrada para torneio: {text} - {a['href']}")
+            parent = a.find_parent('div', class_=lambda x: x and 'event__header' in x)  # Tenta encontrar o pai
+            date_elem = None
+            if parent:
+                date_elem = parent.find(string=lambda t: t and any(d in t for d in [today, "Today"]))
+            if not date_elem:
+                # Fallback: Assume que todos os torneios da página são de hoje se a data não for encontrada
+                print(f"Data não encontrada para torneio: {text} - {a['href']}. Usando fallback para hoje.")
+                date_elem = today  # Usa a data atual como fallback
+            url = "https://lidraughts.org" + a["href"]
+            name = text.split("Brazilian")[0].strip()
+            if name:
+                tournaments.append({"name": name, "url": url})
+                print(f"Torneio encontrado: {name} - {url} - Data: {date_elem}")
     print(f"Total de torneios encontrados: {len(tournaments)}")
     return tournaments
 

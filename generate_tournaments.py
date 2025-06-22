@@ -151,7 +151,7 @@ def generate_html(tournaments):
         section += f'            <li><a href="{url}">{data["name"]}</a> - <a href="{data["download_url"]}">Download</a></li>\n'
         download_urls.append(data["download_url"])
     for tournament in new_tournaments:
-        section += f'            <li><a href="{tournament["url"]}">{tournament["url"]}</a> - <a href="{tournament["download_url"]}">Download</a></li>\n'
+        section += f'            <li><a href="{tournament["url"]}">{tournament["name"]}</a> - <a href="{tournament["download_url"]}">Download</a></li>\n'
         download_urls.append(tournament["download_url"])
     if not section:
         section = "            <li>Nenhum torneio Brazilian com jogos disponíveis hoje.</li>\n"

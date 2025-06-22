@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import os
 from bs4 import BeautifulSoup
 from collections import defaultdict
+import time
 
 # Configurações
 TOURNAMENT_PAGE_URL = "https://lidraughts.org/tournament"
@@ -10,32 +11,46 @@ OUTPUT_FILE = "index.html"
 DAYS_TO_KEEP = 365
 
 def get_tournament_page():
-    """Faz o request para a página de torneios do Lidraughts."""
+    """Faz o request para a página de torneios do Lidraughts com paginação."""
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
-    try:
-        response = requests.get(TOURNAMENT_PAGE_URL, headers=headers, timeout=10)
-        response.raise_for_status()
-        return response.text
-    except requests.RequestException as e:
-        print(f"Erro ao acessar a página de torneios: {e}")
-        return None
+    all_content = ""
+    page = 1
+    while True:
+        url = f"https://lidraughts.org/tournament?page={page}"
+        try:
+            response = requests.get(url, headers=headers, timeout=10)
+            response.raise_for_status()
+            content = response.text
+            if not content or "No tournaments found" in content:
+                break
+            all_content += content
+            page += 1
+            time.sleep(2)  # Pausa para evitar bloqueio
+        except requests.RequestException as e:
+            print(f"Erro ao acessar a página {url}: {e}")
+            break
+    return all_content if all_content else None
 
 def extract_tournaments(html_content):
-    """Extrai torneios 'Brazilian' da página HTML."""
+    """Extrai torneios 'Brazilian' da página HTML, filtrando por data de hoje."""
     if not html_content:
         return []
     soup = BeautifulSoup(html_content, "html.parser")
     tournaments = []
+    today = datetime.now().strftime("%Y.%m.%d")
     for a in soup.select('a[href^="/tournament/"]'):
         text = a.get_text(strip=True)
         if "Brazilian" in text:
-            url = "https://lidraughts.org" + a["href"]
-            name = text.split("Brazilian")[0].strip()
-            if name:
-                tournaments.append({"name": name, "url": url})
-                print(f"Torneio encontrado: {name} - {url}")
+            # Tenta encontrar a data no texto ou em elementos próximos
+            date_elem = a.find_next(string=lambda t: t and any(d in t for d in ["2025.06.21", today]))
+            if date_elem and today in date_elem:
+                url = "https://lidraughts.org" + a["href"]
+                name = text.split("Brazilian")[0].strip()
+                if name:
+                    tournaments.append({"name": name, "url": url})
+                    print(f"Torneio encontrado: {name} - {url}")
     print(f"Total de torneios encontrados: {len(tournaments)}")
     return tournaments
 
@@ -149,6 +164,7 @@ def generate_html(tournaments):
     return new_html
 
 def main():
+    print(f"Iniciando execução em: {time.strftime('%Y-%m-%d %H:%M:%S UTC')}")
     html_content = get_tournament_page()
     if not html_content:
         print("Falha ao obter a página de torneios. Usando HTML existente.")

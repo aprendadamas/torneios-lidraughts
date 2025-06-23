@@ -57,7 +57,7 @@ jobs:
             **/*
             !index.html
           protocol: ftp
-          timeout: 60000 # 60 segundos
+          timeout: 300000 # 300 segundos
           log-level: verbose
           state-name: ""
 

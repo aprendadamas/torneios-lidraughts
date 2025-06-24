@@ -9,6 +9,8 @@ import time
 TOURNAMENT_PAGE_URL = "https://lidraughts.org/tournament"
 OUTPUT_FILE = "index.html"
 DAYS_TO_KEEP = 365
+MAX_PAGES = 50  # Limite máximo de páginas para evitar loops infinitos
+REQUEST_DELAY = 5  # Atraso entre solicitações em segundos
 
 def get_tournament_page():
     """Faz o request para a página de torneios do Lidraughts com paginação."""
@@ -17,23 +19,29 @@ def get_tournament_page():
     }
     all_content = ""
     page = 1
-    while True:
-        url = f"https://lidraughts.org/tournament?page={page}"
+    while page <= MAX_PAGES:
+        url = f"{TOURNAMENT_PAGE_URL}?page={page}"
         try:
             response = requests.get(url, headers=headers, timeout=10)
             response.raise_for_status()
             content = response.text
             soup = BeautifulSoup(content, "html.parser")
-            # Verifica se há torneios na página (procura por links de torneio)
             tournament_links = soup.select('a[href^="/tournament/"]')
             if not tournament_links or "No tournaments found" in content:
+                print(f"Nenhum torneio encontrado na página {page}. Parando.")
                 break
             all_content += content
-            page += 1
             print(f"Processando página {page}...")
-            time.sleep(2)  # Pausa para evitar bloqueio
+            page += 1
+            time.sleep(REQUEST_DELAY)
+        except requests.exceptions.HTTPError as e:
+            print(f"Erro HTTP ao acessar a página {url}: {e} (Status: {response.status_code}, Conteúdo: {response.text[:100]})")
+            break
         except requests.RequestException as e:
             print(f"Erro ao acessar a página {url}: {e}")
+            break
+        except Exception as e:
+            print(f"Erro inesperado na página {page}: {e}")
             break
     return all_content if all_content else None
 
@@ -43,22 +51,21 @@ def extract_tournaments(html_content):
         return []
     soup = BeautifulSoup(html_content, "html.parser")
     tournaments = []
-    today = datetime.now().strftime("%Y.%m.%d")  # Formato: 2025.06.22
+    today = datetime.now().strftime("%Y.%m.%d")  # Formato: 2025.06.23
     for a in soup.select('a[href^="/tournament/"]'):
         text = a.get_text(strip=True)
         if "Brazilian" in text:
-            parent = a.find_parent('div', class_=lambda x: x and 'event__header' in x)  # Tenta encontrar o pai
+            parent = a.find_parent('div', class_=lambda x: x and 'event__header' in x)
             date_elem = None
             if parent:
                 date_elem = parent.find(string=lambda t: t and any(d in t for d in [today, "Today"]))
             if not date_elem:
-                # Fallback: Assume que todos os torneios da página são de hoje se a data não for encontrada
                 print(f"Data não encontrada para torneio: {text} - {a['href']}. Usando fallback para hoje.")
-                date_elem = today  # Usa a data atual como fallback
+                date_elem = today
             url = "https://lidraughts.org" + a["href"]
-            name = text.split("Brazilian")[0].strip()
+            name = text.split("Brazilian")[0].strip() or text
             if name:
-                tournaments.append({"name": name, "url": url})
+                tournaments.append({"name": name, "url": url, "date": date_elem})
                 print(f"Torneio encontrado: {name} - {url} - Data: {date_elem}")
     print(f"Total de torneios encontrados: {len(tournaments)}")
     return tournaments
@@ -100,8 +107,9 @@ def extract_existing_tournaments(html_content):
     return tournaments
 
 def generate_html(tournaments):
-    """Gera o novo conteúdo HTML, sobrescrevendo completamente o arquivo."""
+    """Gera o novo conteúdo HTML com separador e opção de download sequencial do dia."""
     today = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    today_date_only = datetime.now().strftime("%Y-%m-%d")
     existing_html = read_existing_html() or ""
     existing_tournaments = extract_existing_tournaments(existing_html)
 
@@ -113,7 +121,7 @@ def generate_html(tournaments):
             new_tournaments.append({"name": tournament["name"], "url": tournament["url"], "download_url": download_url})
             print(f"Novo torneio adicionado: {tournament['name']} - {tournament['url']}")
 
-    # Construir o HTML completo, sem preservar conteúdo corrompido
+    # Construir o HTML completo
     base_html = f"""<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -121,19 +129,38 @@ def generate_html(tournaments):
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Torneios Diários de Damas Brasileiras - Aprenda Damas</title>
     <style>
-        body {{ font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.6; }}
-        h1, h2 {{ color: #333; }}
-        .day-section {{ margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px; }}
-        .tournament-list {{ list-style-type: none; padding: 0; }}
-        .tournament-list li {{ margin-bottom: 10px; }}
-        a {{ color: #0066cc; text-decoration: none; }}
-        a:hover {{ text-decoration: underline; }}
-        .download-all {{ background-color: #0066cc; color: white; padding: 8px 12px; border-radius: 4px; display: inline-block; margin-top: 10px; }}
-        .download-all:hover {{ background-color: #004c99; text-decoration: none; }}
-        .marketing {{ background-color: #25d366; color: white; padding: 10px; text-align: center; margin: 10px 0; border-radius: 5px; }}
-        .marketing a {{ color: white; text-decoration: none; font-weight: bold; }}
-        .marketing a:hover {{ text-decoration: underline; }}
+        body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+        h1, h2 { color: #333; }
+        .day-section { margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
+        .tournament-list { list-style-type: none; padding: 0; }
+        .tournament-list li { margin-bottom: 10px; }
+        a { color: #0066cc; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .download-all, .download-day { background-color: #0066cc; color: white; padding: 8px 12px; border-radius: 4px; display: inline-block; margin-top: 10px; }
+        .download-all:hover, .download-day:hover { background-color: #004c99; text-decoration: none; }
+        .marketing { background-color: #25d366; color: white; padding: 10px; text-align: center; margin: 10px 0; border-radius: 5px; }
+        .marketing a { color: white; text-decoration: none; font-weight: bold; }
+        .marketing a:hover { text-decoration: underline; }
+        .separator { background-color: #0066cc; color: white; padding: 10px; text-align: center; margin: 10px 0; border-radius: 5px; font-weight: bold; }
     </style>
+    <script>
+        function downloadSequentially(urls) {
+            if (!urls || urls.length === 0) return;
+            let index = 0;
+            function downloadNext() {
+                if (index >= urls.length) return;
+                const link = document.createElement('a');
+                link.href = urls[index];
+                link.download = `tournament_${Date.now()}_${index}.pgn`; // Nome único para cada arquivo
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                index++;
+                setTimeout(downloadNext, 2000); // Intervalo de 2 segundos entre downloads
+            }
+            downloadNext();
+        }
+    </script>
 </head>
 <body>
     <h1>Torneios Diários de Damas Brasileiras - Lidraughts</h1>
@@ -147,28 +174,39 @@ def generate_html(tournaments):
 
     section = ""
     download_urls = []
+    # Adicionar torneios existentes
     for url, data in existing_tournaments.items():
         section += f'            <li><a href="{url}">{data["name"]}</a> - <a href="{data["download_url"]}">Download</a></li>\n'
         download_urls.append(data["download_url"])
-    for tournament in new_tournaments:
-        section += f'            <li><a href="{tournament["url"]}">{tournament["name"]}</a> - <a href="{tournament["download_url"]}">Download</a></li>\n'
-        download_urls.append(tournament["download_url"])
-    if not section:
+    
+    # Adicionar separador e novos torneios com link de download do dia
+    today_download_urls = []
+    if new_tournaments:
+        section += f'        </ul><div class="separator">Torneios Atualizados Hoje - {today_date_only}</div><ul class="tournament-list">\n'
+        for tournament in new_tournaments:
+            section += f'            <li><a href="{tournament["url"]}">{tournament["name"]}</a> - <a href="{tournament["download_url"]}">Download</a></li>\n'
+            download_urls.append(tournament["download_url"])
+            today_download_urls.append(tournament["download_url"])
+    elif not section:
         section = "            <li>Nenhum torneio Brazilian com jogos disponíveis hoje.</li>\n"
 
     download_all_link = "#"
+    download_day_link = "#"
     if download_urls:
         download_all_link = ";".join(download_urls)
+    if today_download_urls:
+        download_day_link = ";".join(today_download_urls)
 
     new_html = base_html + section + f"""        </ul>
         <a href="{download_all_link}" class="download-all">Baixar Todos</a>
+        {'<a href="#" class="download-day" onclick="downloadSequentially(\'{}\'.split(\';\'))">Baixar Todos do Dia</a>'.format(download_day_link) if today_download_urls else ''}
     </div>
     <footer>
         <p>Atualizado diariamente por <a href="https://www.aprendadamas.org">Aprenda Damas</a>. Dados fornecidos por <a href="https://lidraughts.org">Lidraughts.org</a>.</p>
     </footer>
 </body>
-</html>
-"""
+</html>"""
+
     print(f"Conteúdo gerado do index.html:\n{new_html}")
     return new_html
 

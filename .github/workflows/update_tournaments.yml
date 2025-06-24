@@ -2,7 +2,7 @@ name: Atualizar Torneios Diários
 
 on:
   schedule:
-    - cron: '0 1 * * *' # Roda todo dia à 01:00 UTC (22:00 BRT)
+    - cron: '0 2 * * *' # Roda todo dia à 02:00 UTC (23:00 BRT)
   workflow_dispatch: # Permite execução manual
 
 permissions:
@@ -38,10 +38,11 @@ jobs:
       - name: Executar Script Python
         run: |
           echo "Iniciando execução do script Python às $(date -u)"
-          python generate_tournaments.py
+          python generate_tournaments.py 2>&1 | tee python_output.log
           echo "Script Python concluído. Verificando index.html..."
           ls -la
           cat index.html || echo "Arquivo index.html não encontrado"
+          cat python_output.log
           git status
           git diff --staged || echo "Nenhuma alteração detectada"
 

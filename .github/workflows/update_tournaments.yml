@@ -2,7 +2,7 @@ name: Atualizar Torneios Diários
 
 on:
   schedule:
-    - cron: "0 0 * * *" # Roda todo dia à meia-noite UTC
+    - cron: '0 1 * * *' # Roda todo dia à 01:00 UTC (22:00 BRT)
   workflow_dispatch: # Permite execução manual
 
 permissions:
@@ -57,7 +57,7 @@ jobs:
             **/*
             !index.html
           protocol: ftp
-          timeout: 300000 # 300 segundos
+          timeout: 300000 # 300 segundos (5 minutos)
           log-level: verbose
           state-name: ""
 

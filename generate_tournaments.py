@@ -4,16 +4,18 @@ import os
 from bs4 import BeautifulSoup
 from collections import defaultdict
 import time
+import re
 
 # Configurações
 TOURNAMENT_PAGE_URL = "https://lidraughts.org/tournament"
 OUTPUT_FILE = "index.html"
 DAYS_TO_KEEP = 365
-MAX_PAGES = 50  # Limite máximo de páginas para evitar loops infinitos
+MAX_PAGES = 19  # Limite máximo de páginas para evitar o erro na página 20
 REQUEST_DELAY = 5  # Atraso entre solicitações em segundos
+TOP_TOURNAMENTS = 5  # Número de torneios com mais participantes a serem selecionados
 
 def get_tournament_page():
-    """Faz o request para a página de torneios do Lidraughts com paginação."""
+    """Faz o request para a página de torneios do Lidraughts com paginação limitada a 19 páginas."""
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
@@ -46,12 +48,12 @@ def get_tournament_page():
     return all_content if all_content else None
 
 def extract_tournaments(html_content):
-    """Extrai torneios 'Brazilian' da página HTML, filtrando por data de hoje."""
+    """Extrai torneios 'Brazilian' e seleciona os 5 com mais participantes dentro das 19 páginas."""
     if not html_content:
         return []
     soup = BeautifulSoup(html_content, "html.parser")
     tournaments = []
-    today = datetime.now().strftime("%Y.%m.%d")  # Formato: 2025.06.23
+    today = datetime.now().strftime("%Y.%m.%d")  # Formato: 2025.06.24
     for a in soup.select('a[href^="/tournament/"]'):
         text = a.get_text(strip=True)
         if "Brazilian" in text:
@@ -64,11 +66,25 @@ def extract_tournaments(html_content):
                 date_elem = today
             url = "https://lidraughts.org" + a["href"]
             name = text.split("Brazilian")[0].strip() or text
-            if name:
-                tournaments.append({"name": name, "url": url, "date": date_elem})
-                print(f"Torneio encontrado: {name} - {url} - Data: {date_elem}")
-    print(f"Total de torneios encontrados: {len(tournaments)}")
-    return tournaments
+            # Extrair o número de participantes do texto do parent
+            participants = 0
+            if parent:
+                full_text = parent.get_text(strip=True)
+                # Usar regex para pegar o último número da linha
+                match = re.search(r'\d+$', full_text)
+                if match:
+                    participants = int(match.group())
+            if name and participants > 0:
+                tournaments.append({"name": name, "url": url, "date": date_elem, "participants": participants})
+                print(f"Torneio encontrado: {name} - {url} - Data: {date_elem} - Participantes: {participants}")
+    print(f"Total de torneios 'Brazilian' encontrados nas 19 páginas: {len(tournaments)}")
+    
+    # Ordenar por número de participantes e selecionar os 5 primeiros
+    if tournaments:
+        tournaments_sorted = sorted(tournaments, key=lambda x: x["participants"], reverse=True)[:TOP_TOURNAMENTS]
+        print(f"Selecionados os {TOP_TOURNAMENTS} torneios com mais participantes: {[t['name'] for t in tournaments_sorted]}")
+        return tournaments_sorted
+    return []
 
 def has_games(tournament_url):
     """Verifica se o torneio tem jogos disponíveis."""
@@ -139,90 +155,4 @@ def generate_html(tournaments):
         .download-all, .download-day { background-color: #0066cc; color: white; padding: 8px 12px; border-radius: 4px; display: inline-block; margin-top: 10px; }
         .download-all:hover, .download-day:hover { background-color: #004c99; text-decoration: none; }
         .marketing { background-color: #25d366; color: white; padding: 10px; text-align: center; margin: 10px 0; border-radius: 5px; }
-        .marketing a { color: white; text-decoration: none; font-weight: bold; }
-        .marketing a:hover { text-decoration: underline; }
-        .separator { background-color: #0066cc; color: white; padding: 10px; text-align: center; margin: 10px 0; border-radius: 5px; font-weight: bold; }
-    </style>
-    <script>
-        function downloadSequentially(urls) {
-            if (!urls || urls.length === 0) return;
-            let index = 0;
-            function downloadNext() {
-                if (index >= urls.length) return;
-                const link = document.createElement('a');
-                link.href = urls[index];
-                link.download = `tournament_${Date.now()}_${index}.pgn`; // Nome único para cada arquivo
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                index++;
-                setTimeout(downloadNext, 2000); // Intervalo de 2 segundos entre downloads
-            }
-            downloadNext();
-        }
-    </script>
-</head>
-<body>
-    <h1>Torneios Diários de Damas Brasileiras - Lidraughts</h1>
-    <div class="marketing">
-        📱 <a href="https://wa.me/27988750076" target="_blank">Adquira o Programa Aurora Borealis - WhatsApp 27 98875-0076</a>
-    </div>
-    <div class="day-section">
-        <h2>Atualizado em: {today}</h2>
-        <ul class="tournament-list">
-"""
-
-    section = ""
-    download_urls = []
-    # Adicionar torneios existentes
-    for url, data in existing_tournaments.items():
-        section += f'            <li><a href="{url}">{data["name"]}</a> - <a href="{data["download_url"]}">Download</a></li>\n'
-        download_urls.append(data["download_url"])
-    
-    # Adicionar separador e novos torneios com link de download do dia
-    today_download_urls = []
-    if new_tournaments:
-        section += f'        </ul><div class="separator">Torneios Atualizados Hoje - {today_date_only}</div><ul class="tournament-list">\n'
-        for tournament in new_tournaments:
-            section += f'            <li><a href="{tournament["url"]}">{tournament["name"]}</a> - <a href="{tournament["download_url"]}">Download</a></li>\n'
-            download_urls.append(tournament["download_url"])
-            today_download_urls.append(tournament["download_url"])
-    elif not section:
-        section = "            <li>Nenhum torneio Brazilian com jogos disponíveis hoje.</li>\n"
-
-    download_all_link = "#"
-    download_day_link = "#"
-    if download_urls:
-        download_all_link = ";".join(download_urls)
-    if today_download_urls:
-        download_day_link = ";".join(today_download_urls)
-
-    new_html = base_html + section + f"""        </ul>
-        <a href="{download_all_link}" class="download-all">Baixar Todos</a>
-        {'<a href="#" class="download-day" onclick="downloadSequentially(\'{}\'.split(\';\'))">Baixar Todos do Dia</a>'.format(download_day_link) if today_download_urls else ''}
-    </div>
-    <footer>
-        <p>Atualizado diariamente por <a href="https://www.aprendadamas.org">Aprenda Damas</a>. Dados fornecidos por <a href="https://lidraughts.org">Lidraughts.org</a>.</p>
-    </footer>
-</body>
-</html>"""
-
-    print(f"Conteúdo gerado do index.html:\n{new_html}")
-    return new_html
-
-def main():
-    print(f"Iniciando execução em: {time.strftime('%Y-%m-%d %H:%M:%S UTC')}")
-    html_content = get_tournament_page()
-    if not html_content:
-        print("Falha ao obter a página de torneios. Usando HTML existente.")
-        html_content = read_existing_html() or ""
-    tournaments = extract_tournaments(html_content)
-    if not tournaments:
-        print("Nenhum torneio Brazilian encontrado na página.")
-    new_html = generate_html(tournaments)
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        f.write(new_html)
-    print(f"Arquivo {OUTPUT_FILE} salvo com sucesso no caminho: {os.path.abspath(OUTPUT_FILE)}")
-
-if __name__ == "__main__":
-    main()
+        .marketing

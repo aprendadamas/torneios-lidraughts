@@ -2,7 +2,7 @@ name: Atualizar Torneios Diários
 
 on:
   schedule:
-    - cron: '0 2 * * *' # Roda todo dia à 02:00 UTC (23:00 BRT)
+    - cron: '15 2 * * *' # Roda todo dia à 02:15 UTC (23:15 BRT)
   workflow_dispatch: # Permite execução manual
 
 permissions:
@@ -24,6 +24,7 @@ jobs:
         run: |
           rm -rf *  # Remove todos os arquivos antes de checkout
           git reset --hard HEAD
+          echo "Ambiente limpo às $(date -u)"
 
       - name: Configurar Python
         uses: actions/setup-python@v5
@@ -32,19 +33,26 @@ jobs:
 
       - name: Instalar Dependências
         run: |
+          echo "Instalando dependências às $(date -u)"
           python -m pip install --upgrade pip
           pip install requests beautifulsoup4
 
       - name: Executar Script Python
+        id: run-python
         run: |
           echo "Iniciando execução do script Python às $(date -u)"
           python generate_tournaments.py 2>&1 | tee python_output.log
           echo "Script Python concluído. Verificando index.html..."
           ls -la
-          cat index.html || echo "Arquivo index.html não encontrado"
+          if [ -f "index.html" ]; then
+            cat index.html
+          else
+            echo "Arquivo index.html não encontrado"
+          fi
           cat python_output.log
           git status
           git diff --staged || echo "Nenhuma alteração detectada"
+          echo "Tempo de execução: $(( $(date +%s) - $(date +%s -r python_output.log) )) segundos"
 
       - name: Enviar Arquivo via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5

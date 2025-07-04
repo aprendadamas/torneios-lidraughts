@@ -5,131 +5,121 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Torneios Diários de Damas Brasileiras - Aprenda Damas</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.6; }
-        h1, h2 { color: #333; }
-        .day-section { margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
+        body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.6; background-color: #f5f5f5; }
+        h1 { color: #2c3e50; text-align: center; margin-bottom: 10px; }
+        .subtitle { text-align: center; color: #7f8c8d; margin-bottom: 30px; }
+        .day-section { margin-bottom: 30px; border: 1px solid #ddd; padding: 20px; border-radius: 8px; background-color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .day-section h2 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
         .tournament-list { list-style-type: none; padding: 0; }
-        .tournament-list li { margin-bottom: 10px; }
-        a { color: #0066cc; text-decoration: none; }
+        .tournament-list li { margin-bottom: 12px; padding: 10px; background-color: #f8f9fa; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+        .tournament-list li:hover { background-color: #e9ecef; }
+        .tournament-name { flex-grow: 1; }
+        a { color: #3498db; text-decoration: none; font-weight: 500; }
         a:hover { text-decoration: underline; }
-        .download-all { background-color: #0066cc; color: white; padding: 8px 12px; border-radius: 4px; display: inline-block; margin-top: 10px; }
-        .download-all:hover { background-color: #004c99; text-decoration: none; }
-        .marketing { background-color: #25d366; color: white; padding: 10px; text-align: center; margin: 10px 0; border-radius: 5px; }
-        .marketing a { color: white; text-decoration: none; font-weight: bold; }
+        .download-link { color: #27ae60; font-size: 0.9em; }
+        .download-day { background-color: #27ae60; color: white; padding: 10px 20px; border-radius: 5px; display: inline-block; margin-top: 15px; font-weight: bold; border: none; cursor: pointer; }
+        .download-day:hover { background-color: #229954; text-decoration: none; }
+        .marketing { background-color: #25d366; color: white; padding: 15px; text-align: center; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .marketing a { color: white; text-decoration: none; font-weight: bold; font-size: 1.1em; }
         .marketing a:hover { text-decoration: underline; }
+        .update-info { background-color: #3498db; color: white; padding: 12px; text-align: center; margin: 15px 0; border-radius: 8px; }
+        .stats { margin: 10px 0; font-size: 0.9em; color: #7f8c8d; }
+        .no-tournaments { text-align: center; padding: 40px; color: #7f8c8d; }
+        footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #7f8c8d; }
     </style>
+    <script>
+        function downloadAllFromDay(date, urls) {
+            const urlList = urls.split(';');
+            let index = 0;
+            
+            function downloadNext() {
+                if (index < urlList.length) {
+                    const link = document.createElement('a');
+                    link.href = urlList[index];
+                    link.download = '';
+                    link.style.display = 'none';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    index++;
+                    // Aguardar 1 segundo entre downloads
+                    setTimeout(downloadNext, 1000);
+                }
+            }
+            
+            if (confirm(`Deseja baixar ${urlList.length} torneios do dia ${date}?`)) {
+                downloadNext();
+            }
+        }
+    </script>
 </head>
 <body>
-    <h1>Torneios Diários de Damas Brasileiras - Lidraughts</h1>
+    <h1>🎯 Torneios Diários de Damas Brasileiras</h1>
+    <p class="subtitle">Os 10 torneios com mais participantes do Lidraughts</p>
+    
     <div class="marketing">
-        📱 <a href="https://wa.me/27988750076" target="_blank">Adquira o Programa Aurora Borealis - WhatsApp 27 98875-0076</a>
+        📱 <a href="https://wa.me/27988750076" target="_blank">Adquira o Programa Aurora Borealis - WhatsApp (27) 98875-0076</a>
     </div>
+    
+    <div class="update-info">
+        🔄 Última atualização: 2025-07-04 22:24:52 | 🏆 Atualizado diariamente às 00:00
+    </div>
+
     <div class="day-section">
-        <h2>Atualizado em: 2025-06-24 02:21:52</h2>
+        <h2>📅 HOJE - Sexta, 04/07/2025</h2>
+        <div class="stats">Total de torneios: 10</div>
         <ul class="tournament-list">
-            <li><a href="https://lidraughts.org/tournament/amqSD4gY">CAFEZiNHO dos PATOS Arena½+2 •</a> - <a href="https://lidraughts.org/api/tournament/amqSD4gY/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/5FKLoKWH">BABA SY Arena0+2 •</a> - <a href="https://lidraughts.org/api/tournament/5FKLoKWH/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/uHusMscp">AMIGOS 5R DAMAS CLUB Arena Arena1+2 •</a> - <a href="https://lidraughts.org/api/tournament/uHusMscp/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/qjYGFvPb">BABA SY Arena0+2 •</a> - <a href="https://lidraughts.org/api/tournament/qjYGFvPb/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/oBwUga4b">ARTEM IVANOV Arena0+1 •</a> - <a href="https://lidraughts.org/api/tournament/oBwUga4b/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/QJ7upvEl">PauloMachado Arena0+2 •</a> - <a href="https://lidraughts.org/api/tournament/QJ7upvEl/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/l3iSXSzJ">https://lidraughts.org/tournament/l3iSXSzJ</a> - <a href="https://lidraughts.org/api/tournament/l3iSXSzJ/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/gbusNOqy">https://lidraughts.org/tournament/gbusNOqy</a> - <a href="https://lidraughts.org/api/tournament/gbusNOqy/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/z7nDgWsC">https://lidraughts.org/tournament/z7nDgWsC</a> - <a href="https://lidraughts.org/api/tournament/z7nDgWsC/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/RtWo2Wck">https://lidraughts.org/tournament/RtWo2Wck</a> - <a href="https://lidraughts.org/api/tournament/RtWo2Wck/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/QL9faIba">https://lidraughts.org/tournament/QL9faIba</a> - <a href="https://lidraughts.org/api/tournament/QL9faIba/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/TI8Z5YSO">https://lidraughts.org/tournament/TI8Z5YSO</a> - <a href="https://lidraughts.org/api/tournament/TI8Z5YSO/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/lRph2hMt">https://lidraughts.org/tournament/lRph2hMt</a> - <a href="https://lidraughts.org/api/tournament/lRph2hMt/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/NrF2VeeY">https://lidraughts.org/tournament/NrF2VeeY</a> - <a href="https://lidraughts.org/api/tournament/NrF2VeeY/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/3fZeoKcv">https://lidraughts.org/tournament/3fZeoKcv</a> - <a href="https://lidraughts.org/api/tournament/3fZeoKcv/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/0zOVs6WL">https://lidraughts.org/tournament/0zOVs6WL</a> - <a href="https://lidraughts.org/api/tournament/0zOVs6WL/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/rcAwHDQk">https://lidraughts.org/tournament/rcAwHDQk</a> - <a href="https://lidraughts.org/api/tournament/rcAwHDQk/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/Tii3HL69">https://lidraughts.org/tournament/Tii3HL69</a> - <a href="https://lidraughts.org/api/tournament/Tii3HL69/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/j3DXejbv">https://lidraughts.org/tournament/j3DXejbv</a> - <a href="https://lidraughts.org/api/tournament/j3DXejbv/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/7A5wD76P">https://lidraughts.org/tournament/7A5wD76P</a> - <a href="https://lidraughts.org/api/tournament/7A5wD76P/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/v6DYS4fC">https://lidraughts.org/tournament/v6DYS4fC</a> - <a href="https://lidraughts.org/api/tournament/v6DYS4fC/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/Y8NdVyfN">https://lidraughts.org/tournament/Y8NdVyfN</a> - <a href="https://lidraughts.org/api/tournament/Y8NdVyfN/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/jnHwic9G">https://lidraughts.org/tournament/jnHwic9G</a> - <a href="https://lidraughts.org/api/tournament/jnHwic9G/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/8qLBvEVB">https://lidraughts.org/tournament/8qLBvEVB</a> - <a href="https://lidraughts.org/api/tournament/8qLBvEVB/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/LGGglIv5">https://lidraughts.org/tournament/LGGglIv5</a> - <a href="https://lidraughts.org/api/tournament/LGGglIv5/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/JlZHZvDs">https://lidraughts.org/tournament/JlZHZvDs</a> - <a href="https://lidraughts.org/api/tournament/JlZHZvDs/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/SoGWpJ0V">https://lidraughts.org/tournament/SoGWpJ0V</a> - <a href="https://lidraughts.org/api/tournament/SoGWpJ0V/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/trVnDaAF">https://lidraughts.org/tournament/trVnDaAF</a> - <a href="https://lidraughts.org/api/tournament/trVnDaAF/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/PhjJ72ji">https://lidraughts.org/tournament/PhjJ72ji</a> - <a href="https://lidraughts.org/api/tournament/PhjJ72ji/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/bBW4UZ0T">https://lidraughts.org/tournament/bBW4UZ0T</a> - <a href="https://lidraughts.org/api/tournament/bBW4UZ0T/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/R8iQDc0A">https://lidraughts.org/tournament/R8iQDc0A</a> - <a href="https://lidraughts.org/api/tournament/R8iQDc0A/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/kqkf8zQq">https://lidraughts.org/tournament/kqkf8zQq</a> - <a href="https://lidraughts.org/api/tournament/kqkf8zQq/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/6IoHUSJA">https://lidraughts.org/tournament/6IoHUSJA</a> - <a href="https://lidraughts.org/api/tournament/6IoHUSJA/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/ZYK34xAS">https://lidraughts.org/tournament/ZYK34xAS</a> - <a href="https://lidraughts.org/api/tournament/ZYK34xAS/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/Z4fUubEO">https://lidraughts.org/tournament/Z4fUubEO</a> - <a href="https://lidraughts.org/api/tournament/Z4fUubEO/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/Z76kstSW">https://lidraughts.org/tournament/Z76kstSW</a> - <a href="https://lidraughts.org/api/tournament/Z76kstSW/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/QXeUdptJ">https://lidraughts.org/tournament/QXeUdptJ</a> - <a href="https://lidraughts.org/api/tournament/QXeUdptJ/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/7qYac0Yf">https://lidraughts.org/tournament/7qYac0Yf</a> - <a href="https://lidraughts.org/api/tournament/7qYac0Yf/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/L68MnY42">https://lidraughts.org/tournament/L68MnY42</a> - <a href="https://lidraughts.org/api/tournament/L68MnY42/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/XqybGUS5">https://lidraughts.org/tournament/XqybGUS5</a> - <a href="https://lidraughts.org/api/tournament/XqybGUS5/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/GhObH61M">https://lidraughts.org/tournament/GhObH61M</a> - <a href="https://lidraughts.org/api/tournament/GhObH61M/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/TflstGkP">https://lidraughts.org/tournament/TflstGkP</a> - <a href="https://lidraughts.org/api/tournament/TflstGkP/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/4k2kOFIV">https://lidraughts.org/tournament/4k2kOFIV</a> - <a href="https://lidraughts.org/api/tournament/4k2kOFIV/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/KZtWMRaH">https://lidraughts.org/tournament/KZtWMRaH</a> - <a href="https://lidraughts.org/api/tournament/KZtWMRaH/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/qPEeeVXa">https://lidraughts.org/tournament/qPEeeVXa</a> - <a href="https://lidraughts.org/api/tournament/qPEeeVXa/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/p0bf6Bdt">https://lidraughts.org/tournament/p0bf6Bdt</a> - <a href="https://lidraughts.org/api/tournament/p0bf6Bdt/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/rUgw8zCp">https://lidraughts.org/tournament/rUgw8zCp</a> - <a href="https://lidraughts.org/api/tournament/rUgw8zCp/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/4xyHWHOd">https://lidraughts.org/tournament/4xyHWHOd</a> - <a href="https://lidraughts.org/api/tournament/4xyHWHOd/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/oAfnNYth">https://lidraughts.org/tournament/oAfnNYth</a> - <a href="https://lidraughts.org/api/tournament/oAfnNYth/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/T6C5mMPO">https://lidraughts.org/tournament/T6C5mMPO</a> - <a href="https://lidraughts.org/api/tournament/T6C5mMPO/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/HMjnelzJ">https://lidraughts.org/tournament/HMjnelzJ</a> - <a href="https://lidraughts.org/api/tournament/HMjnelzJ/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/s3y9Bi1o">https://lidraughts.org/tournament/s3y9Bi1o</a> - <a href="https://lidraughts.org/api/tournament/s3y9Bi1o/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/MSligSRZ">https://lidraughts.org/tournament/MSligSRZ</a> - <a href="https://lidraughts.org/api/tournament/MSligSRZ/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/kr8uwDXx">https://lidraughts.org/tournament/kr8uwDXx</a> - <a href="https://lidraughts.org/api/tournament/kr8uwDXx/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/piduqKa4">https://lidraughts.org/tournament/piduqKa4</a> - <a href="https://lidraughts.org/api/tournament/piduqKa4/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/eFw8VlHF">https://lidraughts.org/tournament/eFw8VlHF</a> - <a href="https://lidraughts.org/api/tournament/eFw8VlHF/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/F4YDQ8Qu">https://lidraughts.org/tournament/F4YDQ8Qu</a> - <a href="https://lidraughts.org/api/tournament/F4YDQ8Qu/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/Cgh2ydrf">抽签开局 Arena7+5 •</a> - <a href="https://lidraughts.org/api/tournament/Cgh2ydrf/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/m5kr7dWx">平行开局 Arena7+5 •</a> - <a href="https://lidraughts.org/api/tournament/m5kr7dWx/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/VU3tUES8">ARTEM IVANOV Arena0+1 •</a> - <a href="https://lidraughts.org/api/tournament/VU3tUES8/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/LcyC5aqm">PauloMachado Arena0+2 •</a> - <a href="https://lidraughts.org/api/tournament/LcyC5aqm/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/oAtctOSc">Arena só patos Arena3+0 •</a> - <a href="https://lidraughts.org/api/tournament/oAtctOSc/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/yQ8bzFV3">ARTEM IVANOV Arena0+1 •</a> - <a href="https://lidraughts.org/api/tournament/yQ8bzFV3/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/UqXG8KrD">BABA SY Arena0+2 •</a> - <a href="https://lidraughts.org/api/tournament/UqXG8KrD/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/lIcugcQk">ARTEM IVANOV Arena0+1 •</a> - <a href="https://lidraughts.org/api/tournament/lIcugcQk/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/bvWGNoB8">BABA SY Arena0+2 •</a> - <a href="https://lidraughts.org/api/tournament/bvWGNoB8/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/AND1JuN5">cabeludo Arena1+2 •</a> - <a href="https://lidraughts.org/api/tournament/AND1JuN5/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/NBEn9Dva">Daily</a> - <a href="https://lidraughts.org/api/tournament/NBEn9Dva/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/PdhOycp7">BABA SY Arena0+2 •</a> - <a href="https://lidraughts.org/api/tournament/PdhOycp7/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/yF6VekOA">BRAZILIAN DRAUGHTS MARATHON Arena3+2 •</a> - <a href="https://lidraughts.org/api/tournament/yF6VekOA/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/ShOmijkL">Almoço rei dos patos Arena1.5+1 •</a> - <a href="https://lidraughts.org/api/tournament/ShOmijkL/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/EVi0bCKa">BABA SY Arena0+2 •</a> - <a href="https://lidraughts.org/api/tournament/EVi0bCKa/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/utFrXIdC">CAFEZiNHO dos PATOS Arena½+2 •</a> - <a href="https://lidraughts.org/api/tournament/utFrXIdC/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/JaoQxP5k">BABA SY Arena0+2 •</a> - <a href="https://lidraughts.org/api/tournament/JaoQxP5k/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/laGaaEOS">Sadowska Arena1+2 •</a> - <a href="https://lidraughts.org/api/tournament/laGaaEOS/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/Za8P8fLe">BABA SY Arena0+2 •</a> - <a href="https://lidraughts.org/api/tournament/Za8P8fLe/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/qy5zSzY6">ARTEM IVANOV Arena0+1 •</a> - <a href="https://lidraughts.org/api/tournament/qy5zSzY6/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/WHKZ9Zpc">GRUPO  AMIGOS 5R DAMAS CLUBE Arena1+2 •</a> - <a href="https://lidraughts.org/api/tournament/WHKZ9Zpc/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/U5lwFWhy">BABA SY Arena0+2 •</a> - <a href="https://lidraughts.org/api/tournament/U5lwFWhy/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/aYVDEik6">ARTEM IVANOV Arena0+1 •</a> - <a href="https://lidraughts.org/api/tournament/aYVDEik6/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/1f2ADvgJ">Fla 81 Arena3+0 •</a> - <a href="https://lidraughts.org/api/tournament/1f2ADvgJ/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/xJZIG8sn">ARTEM IVANOV Arena0+1 •</a> - <a href="https://lidraughts.org/api/tournament/xJZIG8sn/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/miL3nTc6">PauloMachado Arena0+2 •</a> - <a href="https://lidraughts.org/api/tournament/miL3nTc6/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/ef8sqwhw">Arena só patos Arena3+0 •</a> - <a href="https://lidraughts.org/api/tournament/ef8sqwhw/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/BGU968vy">Anikeev Arena2+1 •</a> - <a href="https://lidraughts.org/api/tournament/BGU968vy/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/yTvN1qsk">ARTEM IVANOV Arena0+1 •</a> - <a href="https://lidraughts.org/api/tournament/yTvN1qsk/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/XtQJ9nNI">ARTEM IVANOV Arena0+1 •</a> - <a href="https://lidraughts.org/api/tournament/XtQJ9nNI/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/Y5OAfUSo">Baixada Arena4+0 •</a> - <a href="https://lidraughts.org/api/tournament/Y5OAfUSo/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/Vd7P9BDR">BABA SY Arena0+2 •</a> - <a href="https://lidraughts.org/api/tournament/Vd7P9BDR/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/EsZXG7IY">Daily</a> - <a href="https://lidraughts.org/api/tournament/EsZXG7IY/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/RGUFiX4k">BABA SY Arena0+2 •</a> - <a href="https://lidraughts.org/api/tournament/RGUFiX4k/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/kq1xfXf4">BRAZILIAN DRAUGHTS MARATHON Arena3+2 •</a> - <a href="https://lidraughts.org/api/tournament/kq1xfXf4/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/xXMNLDo5">Almoço Rei dos patos Arena1.5+1 •</a> - <a href="https://lidraughts.org/api/tournament/xXMNLDo5/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/wtF2zxkb">BABA SY Arena0+2 •</a> - <a href="https://lidraughts.org/api/tournament/wtF2zxkb/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/F7sqn5K5">BABA SY Arena0+2 •</a> - <a href="https://lidraughts.org/api/tournament/F7sqn5K5/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/POXgu11h">BABA SY Arena0+2 •</a> - <a href="https://lidraughts.org/api/tournament/POXgu11h/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/QNJtNAqs">BABA SY Arena0+2 •</a> - <a href="https://lidraughts.org/api/tournament/QNJtNAqs/games">Download</a></li>
-            <li><a href="https://lidraughts.org/tournament/8r2ZU1rf">BABA SY Arena0+2 •</a> - <a href="https://lidraughts.org/api/tournament/8r2ZU1rf/games">Download</a></li>
+            <li>
+                <span class="tournament-name">🏁 <a href="https://lidraughts.org/tournament/l7pCsRKp">Monthly Brazilian-</a></span>
+                <a href="https://lidraughts.org/api/tournament/l7pCsRKp/games" class="download-link">📥 Baixar</a>
+            </li>
+            <li>
+                <span class="tournament-name">🏁 <a href="https://lidraughts.org/tournament/jUlnZaLF">Brazilian Shield-</a></span>
+                <a href="https://lidraughts.org/api/tournament/jUlnZaLF/games" class="download-link">📥 Baixar</a>
+            </li>
+            <li>
+                <span class="tournament-name">🏁 <a href="https://lidraughts.org/tournament/uO0m7htI">Monthly Brazilian-</a></span>
+                <a href="https://lidraughts.org/api/tournament/uO0m7htI/games" class="download-link">📥 Baixar</a>
+            </li>
+            <li>
+                <span class="tournament-name">🏁 <a href="https://lidraughts.org/tournament/PMKJeToQ">Brazilian Shield-</a></span>
+                <a href="https://lidraughts.org/api/tournament/PMKJeToQ/games" class="download-link">📥 Baixar</a>
+            </li>
+            <li>
+                <span class="tournament-name">🏁 <a href="https://lidraughts.org/tournament/ScJ8M3rU">Yearly Brazilian-</a></span>
+                <a href="https://lidraughts.org/api/tournament/ScJ8M3rU/games" class="download-link">📥 Baixar</a>
+            </li>
+            <li>
+                <span class="tournament-name">🏁 <a href="https://lidraughts.org/tournament/ZlxqDbeA">ARTEM IVANOV Arena0+1 • Brazilian • Thematic • Rated • 1h 10m</a></span>
+                <a href="https://lidraughts.org/api/tournament/ZlxqDbeA/games" class="download-link">📥 Baixar</a>
+            </li>
+            <li>
+                <span class="tournament-name">🏁 <a href="https://lidraughts.org/tournament/ZnvTbdA6">Brazilian Bullet Inc Arena1+1 • Brazilian • Rated • 27m</a></span>
+                <a href="https://lidraughts.org/api/tournament/ZnvTbdA6/games" class="download-link">📥 Baixar</a>
+            </li>
+            <li>
+                <span class="tournament-name">🏁 <a href="https://lidraughts.org/tournament/Bjb6TXym">ARTEM IVANOV Arena0+1 • Brazilian • Thematic • Rated • 1h 10m</a></span>
+                <a href="https://lidraughts.org/api/tournament/Bjb6TXym/games" class="download-link">📥 Baixar</a>
+            </li>
+            <li>
+                <span class="tournament-name">🏁 <a href="https://lidraughts.org/tournament/xnXNEzgM">Brazilian Blitz Arena5+0 • Brazilian • Rated • 57m</a></span>
+                <a href="https://lidraughts.org/api/tournament/xnXNEzgM/games" class="download-link">📥 Baixar</a>
+            </li>
+            <li>
+                <span class="tournament-name">🏁 <a href="https://lidraughts.org/tournament/VCY7nMjO">Brazilian SuperBlitz Arena3+0 • Brazilian • Rated • 57m</a></span>
+                <a href="https://lidraughts.org/api/tournament/VCY7nMjO/games" class="download-link">📥 Baixar</a>
+            </li>
         </ul>
-        <a href="https://lidraughts.org/api/tournament/amqSD4gY/games;https://lidraughts.org/api/tournament/5FKLoKWH/games;https://lidraughts.org/api/tournament/uHusMscp/games;https://lidraughts.org/api/tournament/qjYGFvPb/games;https://lidraughts.org/api/tournament/oBwUga4b/games;https://lidraughts.org/api/tournament/QJ7upvEl/games;https://lidraughts.org/api/tournament/l3iSXSzJ/games;https://lidraughts.org/api/tournament/gbusNOqy/games;https://lidraughts.org/api/tournament/z7nDgWsC/games;https://lidraughts.org/api/tournament/RtWo2Wck/games;https://lidraughts.org/api/tournament/QL9faIba/games;https://lidraughts.org/api/tournament/TI8Z5YSO/games;https://lidraughts.org/api/tournament/lRph2hMt/games;https://lidraughts.org/api/tournament/NrF2VeeY/games;https://lidraughts.org/api/tournament/3fZeoKcv/games;https://lidraughts.org/api/tournament/0zOVs6WL/games;https://lidraughts.org/api/tournament/rcAwHDQk/games;https://lidraughts.org/api/tournament/Tii3HL69/games;https://lidraughts.org/api/tournament/j3DXejbv/games;https://lidraughts.org/api/tournament/7A5wD76P/games;https://lidraughts.org/api/tournament/v6DYS4fC/games;https://lidraughts.org/api/tournament/Y8NdVyfN/games;https://lidraughts.org/api/tournament/jnHwic9G/games;https://lidraughts.org/api/tournament/8qLBvEVB/games;https://lidraughts.org/api/tournament/LGGglIv5/games;https://lidraughts.org/api/tournament/JlZHZvDs/games;https://lidraughts.org/api/tournament/SoGWpJ0V/games;https://lidraughts.org/api/tournament/trVnDaAF/games;https://lidraughts.org/api/tournament/PhjJ72ji/games;https://lidraughts.org/api/tournament/bBW4UZ0T/games;https://lidraughts.org/api/tournament/R8iQDc0A/games;https://lidraughts.org/api/tournament/kqkf8zQq/games;https://lidraughts.org/api/tournament/6IoHUSJA/games;https://lidraughts.org/api/tournament/ZYK34xAS/games;https://lidraughts.org/api/tournament/Z4fUubEO/games;https://lidraughts.org/api/tournament/Z76kstSW/games;https://lidraughts.org/api/tournament/QXeUdptJ/games;https://lidraughts.org/api/tournament/7qYac0Yf/games;https://lidraughts.org/api/tournament/L68MnY42/games;https://lidraughts.org/api/tournament/XqybGUS5/games;https://lidraughts.org/api/tournament/GhObH61M/games;https://lidraughts.org/api/tournament/TflstGkP/games;https://lidraughts.org/api/tournament/4k2kOFIV/games;https://lidraughts.org/api/tournament/KZtWMRaH/games;https://lidraughts.org/api/tournament/qPEeeVXa/games;https://lidraughts.org/api/tournament/p0bf6Bdt/games;https://lidraughts.org/api/tournament/rUgw8zCp/games;https://lidraughts.org/api/tournament/4xyHWHOd/games;https://lidraughts.org/api/tournament/oAfnNYth/games;https://lidraughts.org/api/tournament/T6C5mMPO/games;https://lidraughts.org/api/tournament/HMjnelzJ/games;https://lidraughts.org/api/tournament/s3y9Bi1o/games;https://lidraughts.org/api/tournament/MSligSRZ/games;https://lidraughts.org/api/tournament/kr8uwDXx/games;https://lidraughts.org/api/tournament/piduqKa4/games;https://lidraughts.org/api/tournament/eFw8VlHF/games;https://lidraughts.org/api/tournament/F4YDQ8Qu/games;https://lidraughts.org/api/tournament/Cgh2ydrf/games;https://lidraughts.org/api/tournament/m5kr7dWx/games;https://lidraughts.org/api/tournament/VU3tUES8/games;https://lidraughts.org/api/tournament/LcyC5aqm/games;https://lidraughts.org/api/tournament/oAtctOSc/games;https://lidraughts.org/api/tournament/yQ8bzFV3/games;https://lidraughts.org/api/tournament/UqXG8KrD/games;https://lidraughts.org/api/tournament/lIcugcQk/games;https://lidraughts.org/api/tournament/bvWGNoB8/games;https://lidraughts.org/api/tournament/AND1JuN5/games;https://lidraughts.org/api/tournament/NBEn9Dva/games;https://lidraughts.org/api/tournament/PdhOycp7/games;https://lidraughts.org/api/tournament/yF6VekOA/games;https://lidraughts.org/api/tournament/ShOmijkL/games;https://lidraughts.org/api/tournament/EVi0bCKa/games;https://lidraughts.org/api/tournament/utFrXIdC/games;https://lidraughts.org/api/tournament/JaoQxP5k/games;https://lidraughts.org/api/tournament/laGaaEOS/games;https://lidraughts.org/api/tournament/Za8P8fLe/games;https://lidraughts.org/api/tournament/qy5zSzY6/games;https://lidraughts.org/api/tournament/WHKZ9Zpc/games;https://lidraughts.org/api/tournament/U5lwFWhy/games;https://lidraughts.org/api/tournament/aYVDEik6/games;https://lidraughts.org/api/tournament/1f2ADvgJ/games;https://lidraughts.org/api/tournament/xJZIG8sn/games;https://lidraughts.org/api/tournament/miL3nTc6/games;https://lidraughts.org/api/tournament/ef8sqwhw/games;https://lidraughts.org/api/tournament/BGU968vy/games;https://lidraughts.org/api/tournament/yTvN1qsk/games;https://lidraughts.org/api/tournament/XtQJ9nNI/games;https://lidraughts.org/api/tournament/Y5OAfUSo/games;https://lidraughts.org/api/tournament/Vd7P9BDR/games;https://lidraughts.org/api/tournament/EsZXG7IY/games;https://lidraughts.org/api/tournament/RGUFiX4k/games;https://lidraughts.org/api/tournament/kq1xfXf4/games;https://lidraughts.org/api/tournament/xXMNLDo5/games;https://lidraughts.org/api/tournament/wtF2zxkb/games;https://lidraughts.org/api/tournament/F7sqn5K5/games;https://lidraughts.org/api/tournament/POXgu11h/games;https://lidraughts.org/api/tournament/QNJtNAqs/games;https://lidraughts.org/api/tournament/8r2ZU1rf/games" class="download-all">Baixar Todos</a>
+        <button class="download-day" onclick="downloadAllFromDay('04/07/2025', 'https://lidraughts.org/api/tournament/l7pCsRKp/games;https://lidraughts.org/api/tournament/jUlnZaLF/games;https://lidraughts.org/api/tournament/uO0m7htI/games;https://lidraughts.org/api/tournament/PMKJeToQ/games;https://lidraughts.org/api/tournament/ScJ8M3rU/games;https://lidraughts.org/api/tournament/ZlxqDbeA/games;https://lidraughts.org/api/tournament/ZnvTbdA6/games;https://lidraughts.org/api/tournament/Bjb6TXym/games;https://lidraughts.org/api/tournament/xnXNEzgM/games;https://lidraughts.org/api/tournament/VCY7nMjO/games')">
+            📥 Baixar Todos os 10 Torneios deste Dia
+        </button>
     </div>
+
     <footer>
-        <p>Atualizado diariamente por <a href="https://www.aprendadamas.org">Aprenda Damas</a>. Dados fornecidos por <a href="https://lidraughts.org">Lidraughts.org</a>.</p>
+        <p>🎯 Desenvolvido por <a href="https://www.aprendadamas.org">Aprenda Damas</a></p>
+        <p>📊 Dados fornecidos por <a href="https://lidraughts.org">Lidraughts.org</a></p>
+        <p>💡 Dica: Os torneios são selecionados automaticamente com base no número de participantes</p>
     </footer>
 </body>
 </html>

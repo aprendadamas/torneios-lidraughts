@@ -306,6 +306,7 @@ def generate_html(tournaments):
 
 def main():
     """Função principal."""
+    print("=== TESTE: Script iniciado com sucesso! ===")  # Adicione esta linha
     print("Iniciando coleta de torneios...")
     html_content = get_tournament_page()
     if html_content:

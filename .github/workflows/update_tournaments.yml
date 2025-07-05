@@ -2,7 +2,7 @@ name: Atualizar Torneios Diários
 
 on:
   schedule:
-    - cron: '15 2 * * *' # Roda todo dia à 02:15 UTC (23:15 BRT)
+     - cron: '5 11 * * *'  # novo: 08:05 Brasília
   workflow_dispatch: # Permite execução manual
 
 permissions:

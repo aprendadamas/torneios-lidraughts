@@ -121,46 +121,68 @@ def extract_existing_tournaments_by_date(html_content):
                             })
     else:
         # Se não encontrar day-sections, tentar formato antigo
-        # Procurar pela lista de torneios antiga
-        tournament_list = soup.select('.tournament-list li')
-        if tournament_list:
-            # Todos os torneios antigos vão para uma data padrão
-            # Vamos usar a data do último update se disponível
+        print("   Formato antigo detectado, tentando extrair torneios...")
+        
+        # Procurar pela data real no conteúdo HTML
+        # Primeiro tentar encontrar "Última atualização:" no update-info
+        update_info = soup.find('div', class_='update-info')
+        date = None
+        
+        if update_info:
+            update_text = update_info.get_text()
+            # Procurar por data no formato YYYY-MM-DD
+            date_match = re.search(r'(\d{4})-(\d{2})-(\d{2})', update_text)
+            if date_match:
+                date = f"{date_match.group(1)}-{date_match.group(2)}-{date_match.group(3)}"
+                print(f"   Data encontrada no update-info: {date}")
+        
+        # Se ainda não tiver data, procurar no h2 antigo
+        if not date:
             update_h2 = soup.find('h2', string=re.compile(r'Atualizado em:'))
             if update_h2:
-                # O formato no HTML antigo é "2025-06-24" mas parece ser dia 24 de junho
-                # Vamos procurar especificamente por 2025-06-24
                 text = update_h2.get_text()
-                if "2025-06-24" in text:
-                    # Converter para o formato correto (24 de junho de 2025)
-                    date = "2025-06-24"
-                else:
-                    # Procurar por data no formato YYYY-MM-DD
-                    date_match = re.search(r'(\d{4})-(\d{2})-(\d{2})', text)
-                    if date_match:
-                        date = f"{date_match.group(1)}-{date_match.group(2)}-{date_match.group(3)}"
-                    else:
-                        # Usar ontem como fallback
-                        date = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
-            else:
-                # Usar ontem como fallback
-                date = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
-            
+                date_match = re.search(r'(\d{4})-(\d{2})-(\d{2})', text)
+                if date_match:
+                    date = f"{date_match.group(1)}-{date_match.group(2)}-{date_match.group(3)}"
+                    print(f"   Data encontrada no h2: {date}")
+        
+        # Se ainda não tiver data, usar ontem como fallback
+        if not date:
+            date = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+            print(f"   Nenhuma data encontrada, usando ontem: {date}")
+        
+        # Procurar pela lista de torneios
+        # Tentar primeiro dentro de day-section (novo formato que pode ter apenas uma seção)
+        day_section = soup.find('div', class_='day-section')
+        if day_section:
+            tournament_list = day_section.select('.tournament-list li')
+        else:
+            # Formato mais antigo
+            tournament_list = soup.select('.tournament-list li')
+        
+        if tournament_list:
+            print(f"   Encontrados {len(tournament_list)} torneios na lista")
             # Extrair todos os torneios
             for li in tournament_list:
                 a_tags = li.find_all('a')
                 if len(a_tags) >= 2:
                     tournament_url = a_tags[0]['href']
                     download_url = a_tags[1]['href'] 
-                    name = a_tags[0].get_text(strip=True)
-                    tournaments_by_date[date].append({
-                        "name": name,
-                        "url": tournament_url,
-                        "download_url": download_url
-                    })
+                    name = a_tags[0].get_text(strip=True).replace('🏁 ', '')
+                    
+                    # Não adicionar torneios especiais ao histórico
+                    if not any(special in name for special in ['Monthly Brazilian', 'Brazilian Shield', 'Yearly Brazilian', 'Weekly Brazilian']):
+                        if not name.strip().endswith('-'):
+                            tournaments_by_date[date].append({
+                                "name": name,
+                                "url": tournament_url,
+                                "download_url": download_url
+                            })
             
             if tournaments_by_date[date]:
-                print(f"Migrados {len(tournaments_by_date[date])} torneios do formato antigo para {date}")
+                print(f"   Migrados {len(tournaments_by_date[date])} torneios válidos do formato antigo para {date}")
+            else:
+                print(f"   Nenhum torneio válido encontrado após filtrar torneios especiais")
     
     return tournaments_by_date
 
@@ -433,7 +455,7 @@ def generate_html(new_tournaments):
 def main():
     """Função principal."""
     print("=== Iniciando coleta de torneios ===")
-    print(f"Data/hora: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Data/hora atual: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"Buscando os {TOP_TOURNAMENTS} torneios Brazilian com mais participantes...\n")
     
     # Buscar página de torneios
@@ -445,11 +467,12 @@ def main():
         
         if tournaments:
             print(f"\n✅ Encontrados {len(tournaments)} torneios para processar")
-            generate_html(tournaments)
         else:
-            print("\n⚠️ Nenhum torneio Brazilian encontrado na página")
-            # Ainda assim, gerar HTML para manter o histórico
-            generate_html([])
+            print("\n⚠️ Nenhum torneio Brazilian válido encontrado na página")
+            print("   (torneios especiais e inativos foram ignorados)")
+        
+        # Sempre gerar HTML para manter o histórico
+        generate_html(tournaments)
     else:
         print("\n❌ Erro ao buscar a página de torneios")
 

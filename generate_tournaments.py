@@ -90,9 +90,26 @@ def has_games(tournament_id):
 def read_existing_html():
     """Lê o conteúdo atual do index.html, se existir."""
     if os.path.exists(OUTPUT_FILE):
-        with open(OUTPUT_FILE, "r", encoding="utf-8") as f:
-            return f.read()
-    return None
+        try:
+            with open(OUTPUT_FILE, "r", encoding="utf-8") as f:
+                content = f.read()
+            print(f"\n📖 Arquivo {OUTPUT_FILE} existente lido com sucesso")
+            print(f"   Tamanho: {len(content)} caracteres")
+            
+            # Verificar se tem torneios especiais no conteúdo
+            special_count = 0
+            for special in ['Monthly Brazilian-', 'Brazilian Shield-', 'Yearly Brazilian-']:
+                special_count += content.count(special)
+            if special_count > 0:
+                print(f"   ⚠️ Encontrados {special_count} torneios especiais no HTML existente")
+                
+            return content
+        except Exception as e:
+            print(f"\n❌ Erro ao ler {OUTPUT_FILE}: {e}")
+            return None
+    else:
+        print(f"\n📖 Arquivo {OUTPUT_FILE} não existe, será criado um novo")
+        return None
 
 def extract_existing_tournaments_by_date(html_content):
     """Extrai torneios existentes organizados por data."""
@@ -223,6 +240,7 @@ def clean_special_tournaments(tournaments_by_date):
 
 def generate_html(new_tournaments):
     """Gera o novo conteúdo HTML com separador por dia e opção de download diário."""
+    print("\n=== Gerando HTML ===")
     today = datetime.now()
     today_str = today.strftime("%Y-%m-%d")
     today_datetime = today.strftime("%Y-%m-%d %H:%M:%S")
@@ -231,18 +249,21 @@ def generate_html(new_tournaments):
     existing_html = read_existing_html()
     existing_tournaments_by_date = extract_existing_tournaments_by_date(existing_html)
     
-    # Limpar torneios especiais do histórico
-    existing_tournaments_by_date = clean_special_tournaments(existing_tournaments_by_date)
+    # IMPORTANTE: Limpar torneios especiais do histórico
+    if existing_tournaments_by_date:
+        print("\n🧹 Limpando torneios especiais do histórico...")
+        existing_tournaments_by_date = clean_special_tournaments(existing_tournaments_by_date)
     
     # Debug: mostrar quantos dias de histórico temos
     if existing_tournaments_by_date:
         total_existing = sum(len(tournaments) for tournaments in existing_tournaments_by_date.values())
-        print(f"\n📚 Histórico existente: {len(existing_tournaments_by_date)} dias, {total_existing} torneios total")
-        oldest_date = min(existing_tournaments_by_date.keys())
-        newest_date = max(existing_tournaments_by_date.keys())
-        print(f"   Período: {oldest_date} até {newest_date}")
+        print(f"\n📚 Histórico após limpeza: {len(existing_tournaments_by_date)} dias, {total_existing} torneios total")
+        if existing_tournaments_by_date:
+            oldest_date = min(existing_tournaments_by_date.keys())
+            newest_date = max(existing_tournaments_by_date.keys())
+            print(f"   Período: {oldest_date} até {newest_date}")
     else:
-        print("\n📚 Nenhum histórico existente encontrado")
+        print("\n📚 Nenhum histórico válido após limpeza")
     
     # Adicionar novos torneios ao dia de hoje
     if new_tournaments:
@@ -377,6 +398,7 @@ def generate_html(new_tournaments):
     <div class="update-info">
         🔄 Última atualização: {today_datetime} | 🏆 Atualizado diariamente às 00:00
     </div>
+    <!-- Cache buster: {datetime.now().timestamp()} -->
 """
     
     if not sorted_dates:
@@ -456,12 +478,24 @@ def generate_html(new_tournaments):
 </html>"""
     
     # Salvar o arquivo
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        f.write(html_content)
+    try:
+        with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+            f.write(html_content)
+        
+        # Verificar se o arquivo foi salvo
+        if os.path.exists(OUTPUT_FILE):
+            file_size = os.path.getsize(OUTPUT_FILE)
+            print(f"\n✅ Arquivo {OUTPUT_FILE} salvo com sucesso!")
+            print(f"   Tamanho do arquivo: {file_size} bytes")
+        else:
+            print(f"\n❌ ERRO: Arquivo {OUTPUT_FILE} não foi criado!")
+            
+    except Exception as e:
+        print(f"\n❌ ERRO ao salvar arquivo: {e}")
+        return
     
     # Resumo final
     total_tournaments = sum(len(tournaments) for tournaments in existing_tournaments_by_date.values())
-    print(f"\n✅ Arquivo {OUTPUT_FILE} atualizado com sucesso!")
     print(f"📊 Resumo: {len(existing_tournaments_by_date)} dias de histórico, {total_tournaments} torneios total")
 
 def main():
@@ -489,7 +523,37 @@ def main():
         print("\n❌ Erro ao buscar a página de torneios")
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+        print("\n=== Script finalizado com sucesso! ===")
+    except Exception as e:
+        print(f"\n❌ ERRO CRÍTICO: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        # Tentar salvar um HTML de erro
+        try:
+            error_html = f"""<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Erro - Torneios Diários</title>
+</head>
+<body>
+    <h1>Erro ao processar torneios</h1>
+    <p>Ocorreu um erro: {str(e)}</p>
+    <p>Por favor, verifique os logs.</p>
+</body>
+</html>"""
+            with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+                f.write(error_html)
+            print(f"\n⚠️ HTML de erro salvo em {OUTPUT_FILE}")
+        except:
+            print("\n❌ Não foi possível salvar nem mesmo o HTML de erro!")
+        
+        # Sair com código de erro
+        import sys
+        sys.exit(1)
 )):
                 parent = parent.parent
             

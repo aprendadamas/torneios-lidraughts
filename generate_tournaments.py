@@ -23,6 +23,18 @@ def get_tournament_page():
         print(f"Acessando {TOURNAMENT_PAGE_URL}...")
         response = requests.get(TOURNAMENT_PAGE_URL, headers=headers, timeout=10)
         response.raise_for_status()
+        print(f"✅ Página carregada com sucesso! Status: {response.status_code}")
+        print(f"   Tamanho do conteúdo: {len(response.text)} caracteres")
+        return response.text
+    except requests.RequestException as e:
+        print(f"❌ Erro ao acessar a página: {e}")
+        return NoneUser-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+    
+    try:
+        print(f"Acessando {TOURNAMENT_PAGE_URL}...")
+        response = requests.get(TOURNAMENT_PAGE_URL, headers=headers, timeout=10)
+        response.raise_for_status()
         return response.text
     except requests.RequestException as e:
         print(f"Erro ao acessar a página: {e}")

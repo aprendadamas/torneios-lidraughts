@@ -9,8 +9,9 @@
 
 **Solução:**
 ```
-6-11 → 28-23 → 1-5 → 23-20 → 11-14 → 19-15 → 5-9 → 20-16 → 14-18 → 16-12 →
-10-14 → 12-7 → 18-22 → 7-3 → 14-19 → 15-11 → 19-23 → 11-6 → 22-26 → 6-2
+d2-e3 → g7-f6 → a1-b2 → f6-g5 → e3-d4 → e5-f4 → b2-a3 → g5-h4 →
+d4-c5 → h4-g3 → c3-d4 → g3-f2 → c5-d6 → f2-e1 → d4-e5 → f4-e3 →
+e5-f6 → e3-d2 → d6-c7 → d2-c1
 ```
 **Total de lances:** 20
 
@@ -25,12 +26,13 @@
 
 **Solução:**
 ```
-1-5 → 24-20 → 5-9 → 28-24 → 6-11 → 20-15 → 11x20 → 24x15 → 9-13 → 15-11 →
-13-18 → 11-7 → 18-22 → 19x26 → 17-21 → 26-22 → 21-25 → 22-18 → 25-29 → 7-3
+a1-b2 → h6-g5 → b2-a3 → g7-h6 → d2-e3 → g5-f4 → e3xg5 → h6xf4 →
+a3-b4 → f4-e3 → b4-c5 → e3-f2 → c5-d6 → e5xc7 → a5-b6 → c7-d6 →
+b6-a7 → d6-c5 → a7-b8 → f2-e1
 ```
 **Total de lances:** 20
 
-**Capturas nesta linha:** 11x20, 24x15, 19x26
+**Capturas nesta linha:** e3xg5, h6xf4, e5xc7
 
 ---
 
@@ -43,12 +45,13 @@
 
 **Solução:**
 ```
-14x23 → 28x19 → 1-5 → 32-28 → 17-21 → 17x26 → 4-7 → 24-20 → 5-9 → 20-16 →
-9-13 → 15-12 → 10-14 → 12x17 → 14x32 → 16-12 → 32-28 → 17-13 → 28-23 → 26-21
+d4xf6 → g7xe5 → a1-b2 → h8-g7 → a5-b6 → a5xc7 → g1-f2 → h6-g5 →
+b2-a3 → g5-h4 → a3-b4 → f4-g3 → c3-d4 → g3xa5 → d4xh8 → h4-g3 →
+h8-g7 → a5-b4 → g7-f6 → c7-b6
 ```
 **Total de lances:** 20
 
-**Capturas nesta linha:** 14x23, 28x19, 17x26, 12x17, 14x32
+**Capturas nesta linha:** d4xf6, g7xe5, a5xc7, g3xa5, d4xh8
 
 ---
 
@@ -61,12 +64,13 @@
 
 **Solução:**
 ```
-1-5 → 27-22 → 4-7 → 23-20 → 7-12 → 15-11 → 6x15 → 20x11 → 5-9 → 22-18 →
-17-21 → 17x26 → 12-15 → 11x20 → 8-12 → 26-22 → 12-16 → 20-15 → 10-13 → 15-11
+a1-b2 → e7-d6 → g1-f2 → f6-g5 → f2-g3 → f4-e3 → d2xf4 → g5xe3 →
+b2-a3 → d6-c5 → a5-b6 → a5xc7 → g3-f4 → e3xg5 → h2-g3 → c7-d6 →
+g3-h4 → g5-f4 → c3-b4 → f4-e3
 ```
 **Total de lances:** 20
 
-**Capturas nesta linha:** 6x15, 20x11, 17x26, 11x20
+**Capturas nesta linha:** d2xf4, g5xe3, a5xc7, e3xg5
 
 ---
 
@@ -79,7 +83,7 @@
 
 **Solução:**
 ```
-8-12
+h2-g3
 ```
 **Total de lances:** 1
 
@@ -90,9 +94,9 @@
 Este solver foi desenvolvido especificamente para resolver exercícios de damas brasileiras (8x8) usando algoritmo minimax com poda alpha-beta. As soluções apresentadas representam as melhores sequências de movimentos encontradas pelo motor a uma profundidade de busca de 12 níveis.
 
 **Notação utilizada:**
-- `X-Y`: movimento simples da casa X para casa Y
-- `XxY`: captura da casa X para casa Y
-- As casas são numeradas de 1 a 32 no sistema padrão de damas brasileiras
+- `a1-b2`: movimento simples da casa a1 para casa b2
+- `e3xg5`: captura da casa e3 para casa g5 (com "x")
+- As casas são identificadas por letra (a-h) + número (1-8)
 
 **Gerado em:** 2025-10-24
 **Motor:** Solver Damas Brasileiras v1.0

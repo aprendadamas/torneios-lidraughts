@@ -17,18 +17,33 @@ class Move:
     captures: List[int]  # Peças capturadas
     promotes: bool = False
 
+    @staticmethod
+    def pos_to_algebraic(pos: int) -> str:
+        """Converte número da casa (1-32) para notação algébrica (a1-h8)"""
+        pos_idx = pos - 1  # 0-31
+        row = pos_idx // 4
+
+        if row % 2 == 0:  # Linhas 1,3,5,7
+            col = (pos_idx % 4) * 2  # a,c,e,g (0,2,4,6)
+        else:  # Linhas 2,4,6,8
+            col = (pos_idx % 4) * 2 + 1  # b,d,f,h (1,3,5,7)
+
+        col_letter = chr(ord('a') + col)
+        row_number = row + 1
+        return f"{col_letter}{row_number}"
+
     def __str__(self):
         """Retorna notação do movimento"""
         if self.captures:
-            return f"{self.from_pos}x{self.to_pos}"
-        return f"{self.from_pos}-{self.to_pos}"
+            return f"{self.pos_to_algebraic(self.from_pos)}x{self.pos_to_algebraic(self.to_pos)}"
+        return f"{self.pos_to_algebraic(self.from_pos)}-{self.pos_to_algebraic(self.to_pos)}"
 
     def to_notation(self):
         """Retorna notação completa com todas as capturas"""
         if self.captures:
             # Para capturas múltiplas, mostrar a sequência
-            return f"{self.from_pos}x{self.to_pos}"
-        return f"{self.from_pos}-{self.to_pos}"
+            return f"{self.pos_to_algebraic(self.from_pos)}x{self.pos_to_algebraic(self.to_pos)}"
+        return f"{self.pos_to_algebraic(self.from_pos)}-{self.pos_to_algebraic(self.to_pos)}"
 
 
 class Board:

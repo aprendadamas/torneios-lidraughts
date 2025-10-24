@@ -54,3 +54,10 @@ dmypy.json
 # Documentation
 docs/_build/
 site/
+
+# Repositórios externos clonados
+lidraughts-source/
+
+# Arquivos de teste/debug temporários
+test_pos64.py
+debug_pos.py

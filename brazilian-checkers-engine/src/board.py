@@ -30,9 +30,13 @@ class Board:
         self.pieces: Dict[Color, List[Piece]] = {Color.WHITE: [], Color.BLACK: []}
 
     def setup_initial_position(self):
-        """Configura a posição inicial do jogo"""
-        # Peças brancas nas linhas 0, 1, 2
-        for row in range(3):
+        """
+        Configura a posição inicial do jogo
+        Convenção: linha 0 do array = linha 8 da notação (topo/pretas)
+                   linha 7 do array = linha 1 da notação (base/brancas)
+        """
+        # Peças brancas nas linhas 5, 6, 7 do array (linhas 3, 2, 1 da notação)
+        for row in range(5, 8):
             for col in range(self.size):
                 # Apenas casas escuras (soma de linha + coluna é ímpar)
                 if (row + col) % 2 == 1:
@@ -40,8 +44,8 @@ class Board:
                     self.board[row][col] = piece
                     self.pieces[Color.WHITE].append(piece)
 
-        # Peças pretas nas linhas 5, 6, 7
-        for row in range(5, 8):
+        # Peças pretas nas linhas 0, 1, 2 do array (linhas 8, 7, 6 da notação)
+        for row in range(3):
             for col in range(self.size):
                 # Apenas casas escuras
                 if (row + col) % 2 == 1:

@@ -32,15 +32,15 @@ class TestBoard(unittest.TestCase):
         self.assertEqual(self.board.count_pieces(Color.WHITE), 12)
         self.assertEqual(self.board.count_pieces(Color.BLACK), 12)
 
-        # Verificar que peças brancas estão nas linhas 0-2
+        # Verificar que peças brancas estão nas linhas 5-7 (linhas 3,2,1 da notação)
         white_pieces = self.board.get_pieces_by_color(Color.WHITE)
         for piece in white_pieces:
-            self.assertIn(piece.position[0], [0, 1, 2])
+            self.assertIn(piece.position[0], [5, 6, 7])
 
-        # Verificar que peças pretas estão nas linhas 5-7
+        # Verificar que peças pretas estão nas linhas 0-2 (linhas 8,7,6 da notação)
         black_pieces = self.board.get_pieces_by_color(Color.BLACK)
         for piece in black_pieces:
-            self.assertIn(piece.position[0], [5, 6, 7])
+            self.assertIn(piece.position[0], [0, 1, 2])
 
     def test_is_valid_position(self):
         """Testa validação de posições"""
@@ -107,14 +107,14 @@ class TestBoard(unittest.TestCase):
 
     def test_move_piece_with_promotion(self):
         """Testa movimento com coroação"""
-        # Peça branca na linha 6
-        piece = Piece(Color.WHITE, (6, 1))
-        self.board.place_piece(piece, (6, 1))
+        # Peça branca na linha 1 (próxima à coroação)
+        piece = Piece(Color.WHITE, (1, 2))
+        self.board.place_piece(piece, (1, 2))
 
         self.assertFalse(piece.is_king())
 
-        # Mover para linha 7 (coroação)
-        self.board.move_piece((6, 1), (7, 2))
+        # Mover para linha 0 (coroação das brancas)
+        self.board.move_piece((1, 2), (0, 3))
 
         self.assertTrue(piece.is_king())
 

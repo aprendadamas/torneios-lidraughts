@@ -61,23 +61,25 @@ class Piece:
     def get_forward_direction(self) -> int:
         """
         Retorna a direção de avanço da peça
-        Brancas sobem (linha aumenta), pretas descem (linha diminui)
+        Brancas descem no array (linha diminui, vão de 7 para 0)
+        Pretas sobem no array (linha aumenta, vão de 0 para 7)
         """
-        return 1 if self.color == Color.WHITE else -1
+        return -1 if self.color == Color.WHITE else 1
 
     def should_be_crowned(self, board_size: int = 8) -> bool:
         """
         Verifica se a peça deve ser coroada (virar dama)
-        Brancas na última linha (7), pretas na primeira linha (0)
+        Brancas coroam na linha 0 do array (linha 8 da notação)
+        Pretas coroam na linha 7 do array (linha 1 da notação)
         """
         if self.is_king():
             return False
 
         row, _ = self.position
         if self.color == Color.WHITE:
-            return row == board_size - 1
-        else:
             return row == 0
+        else:
+            return row == board_size - 1
 
     def __repr__(self) -> str:
         """Representação em string da peça"""

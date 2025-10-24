@@ -1,0 +1,16 @@
+# Dependências do Motor de Damas Brasileiro
+
+# Testes
+pytest>=7.0.0
+pytest-cov>=4.0.0
+
+# Tipo checking (opcional)
+mypy>=1.0.0
+
+# Formatação de código (opcional)
+black>=23.0.0
+flake8>=6.0.0
+
+# Documentação (opcional)
+sphinx>=5.0.0
+sphinx-rtd-theme>=1.0.0

@@ -58,6 +58,47 @@ Uma busca minimax otimizada com memoização até profundidade 10 também não e
 - Melhor sequência: Similar à encontrada pelo motor tático
 - Resultado: Posição aproximadamente equilibrada após 10 lances
 
+### 4. Motor Tático com Profundidade 16-18 (Nova Tentativa - 2025-10-28)
+
+**DESCOBERTO BUG NO MOTOR TÁTICO! 🐛**
+
+O motor tático foi testado com profundidade 16 e sugeriu: **f4 → g5**
+
+- Profundidade 12: Score +450 (pequena vantagem)
+- Profundidade 16: Score **+9987** (aparente vitória forçada!)
+- Nós pesquisados: 686.115
+
+Sequência retornada (14 lances):
+1. f4 → g5
+2. h6 x g5 x e3 → d2
+3. c1 x d2 → e3
+4. b4 → c3
+5. d4 x c3 → b2
+6. a3 x b2 → c1
+7. e3 → d4
+8. c7 → d6
+9. d4 → c5
+10. d6 x c5 → b4
+11. f2 → g3
+12. b4 → a3
+13. g3 → f4
+14. c1 x f4 → g5
+
+**Resultado da simulação**:
+- Após 14 lances: Brancas têm 1 peão (h4), Pretas têm 1 dama (g5) + 3 peões
+- **Brancas não têm movimentos disponíveis** (h4 está bloqueado pela dama em g5)
+- **BRANCAS PERDERAM!** ❌
+
+**BUG IDENTIFICADO**: O motor retornou score +9987 (vitória forçada), mas a sequência leva à DERROTA das brancas!
+
+**Possíveis causas**:
+1. Erro na avaliação de posições finais
+2. Bug no algoritmo minimax
+3. Erro no cálculo de movimentos disponíveis
+4. Problema com detecção de fim de jogo
+
+**Conclusão**: O motor tático tem um bug sério que precisa ser corrigido antes de confiar nos resultados de profundidade alta.
+
 ## Movimentos Possíveis das Brancas
 
 Na posição inicial, as brancas têm 8 movimentos simples possíveis:

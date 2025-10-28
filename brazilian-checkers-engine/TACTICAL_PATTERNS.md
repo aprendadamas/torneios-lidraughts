@@ -10,6 +10,7 @@ Este documento cataloga os padrões táticos encontrados ao resolver exercícios
 | #13 | ✅ RESOLVIDO | Sacrifício forçando promoção armadilha | Básico |
 | #14 | ❌ NÃO RESOLVIDO | ? | Intermediário |
 | #15 | ✅ RESOLVIDO | Sequência de capturas forçadas | Básico |
+| #16 | ✅ RESOLVIDO | Sacrifício com lance intermediário e captura da dama | Básico |
 
 ---
 
@@ -191,6 +192,92 @@ Este padrão é o mais fácil para o motor, pois basta:
 
 ---
 
+## Padrão 4: Sacrifício com Lance Intermediário e Captura de Dama
+
+**Identificado em**: Exercício #16
+
+### Descrição
+
+Variação mais sofisticada do Padrão 2. Sacrifica uma peça para forçar o adversário a promover uma dama, mas usa **lances intermediários** para colocar a nova dama em posição vulnerável antes de capturá-la junto com outras peças.
+
+### Exemplo: Exercício #16
+
+**Posição Inicial**:
+- Brancas: c1, f2, h2, g3 (4 peões)
+- Pretas: c3, e5, c7 (3 peões) + d8 (1 DAMA) - vantagem das pretas!
+
+**Solução**:
+1. **c1 → d2** (SACRIFÍCIO)
+2. c3 x d2 → e1 ♛ (captura forçada, promove segunda dama!)
+3. **g3 → h4** (LANCE INTERMEDIÁRIO - cria captura obrigatória)
+4. e1 x f2 → g3 (dama forçada a capturar em posição ruim)
+5. **h2 x g3 x e5 x c7 → b8 ♛** (captura TRIPLA incluindo a dama + promoção!)
+
+**Resultado**: Brancas revertem desvantagem e ficam com 2 peças vs 1 dama (vantagem vencedora)
+
+### Características
+
+- **Sacrifício inicial** permite promoção adversária
+- **Lance intermediário crucial** (g3 → h4) força a dama recém-promovida a posição vulnerável
+- **Dama é forçada a capturar** em diagonal perigosa
+- **Captura múltipla incluindo a dama** mais outros peões
+- **Promoção própria** completa a reviravolta
+- Reverte completamente uma posição desvantajosa
+
+### Diferença dos Outros Padrões
+
+**vs Padrão 1** (Exercício #1):
+- Padrão 1: Sacrifício simples → captura múltipla
+- Padrão 4: Sacrifício → promoção adversária → lance intermediário → captura múltipla
+
+**vs Padrão 2** (Exercício #13):
+- Padrão 2: Dama promove e fica armadilhada imediatamente
+- Padrão 4: Dama promove, mas precisa de lance intermediário para colocá-la em perigo
+
+### Elementos Táticos
+
+1. **Sacrifício com armadilha futura** (não imediata)
+2. **Permitir promoção adversária** como parte do plano
+3. **Lance intermediário "quiet"** que cria ameaça
+4. **Captura obrigatória forçada** para a dama
+5. **Captura múltipla incluindo peça de alto valor** (dama)
+6. **Promoção própria** ao final
+
+### Implementação no Motor
+
+O motor tático **ENCONTROU** esta solução automaticamente!
+
+- Profundidade: 8
+- Nós pesquisados: 16.030
+- Lance encontrado: `c1 → d2`
+- Avaliação: +100
+
+**Como o motor reconheceu**:
+1. Função `is_tactical_sacrifice()` detecta que c1 → d2 pode levar a táticas
+2. Profundidade adaptativa permite ver os 5 lances completos
+3. Avaliação considera capturas múltiplas (bônus de 50 por peça)
+4. Minimax explora todas variantes forçadas
+
+### Melhorias Sugeridas
+
+Para melhor reconhecer este padrão:
+
+1. **Aumentar valor de captura de dama**:
+   ```python
+   if captured_piece_is_king:
+       bonus += 200  # Dama vale mais que 2 peões
+   ```
+
+2. **Reconhecer lances intermediários táticos**:
+   - Lances que criam capturas obrigatórias após promoção adversária
+   - Avaliar com bônus especial
+
+3. **Bonificar reversões de posição**:
+   - Se posição inicial é desvantajosa mas resultado é vantajoso
+   - Dar bônus extra para sacrifícios que revertem desvantagem
+
+---
+
 ## Melhorias Necessárias no Motor
 
 ### 1. Função de Avaliação Tática
@@ -259,6 +346,13 @@ Baseado no fato de que Exercício #14 não foi resolvido, pode haver padrões ad
 - Avaliação: 750 (vantagem decisiva)
 - Nós pesquisados: 564
 - Profundidade: 6
+
+✅ **Exercício #16**:
+- Motor encontrou: `c1 → d2`
+- Avaliação: 100 (pequena vantagem após sequência)
+- Nós pesquisados: 16.030
+- Profundidade: 8
+- **Padrão**: Sacrifício com lance intermediário e captura de dama
 
 ### Exercícios Não Resolvidos
 

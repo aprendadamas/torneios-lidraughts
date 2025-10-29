@@ -184,19 +184,33 @@ class BrazilianGameComplete:
             new_occupied.discard(current_field)
             new_occupied.add(beyond.field)
 
-            # Verificar se promove (REGRA BRASILEIRA: para quando promove!)
+            # Verificar se promove
             promotes = self.is_promotion_square(beyond.field, self.turn)
 
             if promotes and not is_promoted:
-                # Promove a dama - PARA a captura (regra brasileira)
-                captures.append(Capture(
-                    from_field=original_from,
-                    to_field=beyond.field,
-                    captured_fields=new_captured,
-                    promotes=True
-                ))
+                # REGRA FMJD: Se alcança linha de coroação, PRIMEIRO tenta
+                # continuar capturando "no mesmo curso" (como peão)
+                further_captures = self._find_man_captures(
+                    beyond.field,
+                    original_from,
+                    new_occupied,
+                    new_captured,
+                    is_promoted=False  # Tenta continuar como peão!
+                )
+
+                if further_captures:
+                    # Há mais capturas como peão - continua SEM promover
+                    captures.extend(further_captures)
+                else:
+                    # Sem mais capturas - promove e para
+                    captures.append(Capture(
+                        from_field=original_from,
+                        to_field=beyond.field,
+                        captured_fields=new_captured,
+                        promotes=True
+                    ))
             else:
-                # Continua buscando capturas adicionais
+                # Não é linha de promoção ou já é dama
                 further_captures = self._find_man_captures(
                     beyond.field,
                     original_from,

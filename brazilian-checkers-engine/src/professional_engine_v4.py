@@ -89,13 +89,9 @@ class ProfessionalEngine:
             if self.time_up:
                 break
 
-            # Aspiration Windows (a partir de depth 4)
-            if depth >= 4 and best_score != 0:
-                alpha = best_score - aspiration_window
-                beta = best_score + aspiration_window
-            else:
-                alpha = float('-inf')
-                beta = float('inf')
+            # Usar janela completa sempre (sem aspiration por enquanto)
+            alpha = float('-inf')
+            beta = float('inf')
 
             # Buscar nesta profundidade
             try:
@@ -103,16 +99,11 @@ class ProfessionalEngine:
                     game, depth, alpha, beta, zobrist_key
                 )
 
-                # Re-search se score está fora da janela
-                if score <= alpha or score >= beta:
-                    # Re-search com janela completa
-                    score, move, pv_depth = self._search_root(
-                        game, depth, float('-inf'), float('inf'), zobrist_key
-                    )
-
-                best_move = move
-                best_score = score
-                pv = pv_depth
+                # Atualizar se movimento válido
+                if move and move != "no moves":
+                    best_move = move
+                    best_score = score
+                    pv = pv_depth
 
                 # Log progresso
                 elapsed = time.time() - self.start_time
@@ -142,8 +133,9 @@ class ProfessionalEngine:
                      ) -> Tuple[int, str, List[str]]:
         """Busca no nó raiz"""
         best_score = float('-inf') if game.turn == "white" else float('inf')
-        best_move_str = "no moves"
+        best_move_str = None
         best_pv = []
+        best_move_tuple = None
 
         # Obter lances
         captures = game.find_all_captures()
@@ -151,6 +143,8 @@ class ProfessionalEngine:
             moves = [(cap, True) for cap in captures]
         else:
             simple_moves = game.find_simple_moves()
+            if not simple_moves:
+                return 0, "no moves", []
             moves = [(m, False) for m in simple_moves]
 
         # Ordenar movimentos
@@ -192,25 +186,39 @@ class ProfessionalEngine:
                 if score > best_score:
                     best_score = score
                     best_move_str = move_str
+                    best_move_tuple = move_tuple
                     best_pv = [move_str] + pv
                 alpha = max(alpha, score)
             else:
                 if score < best_score:
                     best_score = score
                     best_move_str = move_str
+                    best_move_tuple = move_tuple
                     best_pv = [move_str] + pv
                 beta = min(beta, score)
 
             if beta <= alpha:
                 break  # Cutoff
 
-        # Armazenar na TT
-        self.tt.store(
-            zobrist_key, depth, best_score,
-            NodeType.EXACT, move_tuple if best_move_str != "no moves" else None
-        )
+        # Se não encontrou nenhum movimento, retornar o primeiro
+        if not best_move_str and moves:
+            move, is_capture = moves[0]
+            if is_capture:
+                best_move_str = self._capture_notation(move)
+                best_move_tuple = (move.from_field, move.to_field,
+                                 tuple(move.captured_fields), move.promotes)
+            else:
+                best_move_str = f"{Pos64(move[0]).to_algebraic()} → {Pos64(move[1]).to_algebraic()}"
+                best_move_tuple = (move[0], move[1], tuple(), False)
 
-        return best_score, best_move_str, best_pv
+        # Armazenar na TT
+        if best_move_tuple:
+            self.tt.store(
+                zobrist_key, depth, best_score,
+                NodeType.EXACT, best_move_tuple
+            )
+
+        return best_score, best_move_str or "no moves", best_pv
 
     def _negamax(self, game: BrazilianGameComplete, depth: int,
                  alpha: float, beta: float, zobrist_key: int,

@@ -78,6 +78,11 @@ class ProfessionalEngine:
         best_score = 0
         pv = []
 
+        # Rastreamento para estabilidade
+        previous_move = None
+        previous_score = 0
+        stable_iterations = 0
+
         # Initial guess para aspiration windows
         alpha = float('-inf')
         beta = float('inf')
@@ -99,22 +104,53 @@ class ProfessionalEngine:
                     game, depth, alpha, beta, zobrist_key
                 )
 
-                # Atualizar se movimento válido
-                if move and move != "no moves":
+                # Validar resultado
+                is_valid = True
+
+                # Check 1: Movimento válido
+                if not move or move == "no moves":
+                    is_valid = False
+
+                # Check 2: Score não é infinito (sem usar math.isinf para evitar import)
+                if is_valid and (score > 100000 or score < -100000):
+                    is_valid = False
+                    print(f"⚠️  depth {depth}: score suspeito {score:+.0f}, mantendo resultado anterior")
+
+                # Check 3: Mudança extrema de score (>5000 pontos)
+                if is_valid and previous_move and abs(score - previous_score) > 5000:
+                    # Permitir se for primeiro salto para endgame score
+                    if not (abs(previous_score) < 500 and abs(score) > 5000):
+                        is_valid = False
+                        print(f"⚠️  depth {depth}: mudança extrema de score "
+                              f"({previous_score:+.0f} → {score:+.0f}), mantendo resultado anterior")
+
+                # Atualizar se resultado válido
+                if is_valid:
                     best_move = move
                     best_score = score
                     pv = pv_depth
 
+                    # Rastrear estabilidade
+                    if move == previous_move:
+                        stable_iterations += 1
+                    else:
+                        stable_iterations = 1
+
+                    previous_move = move
+                    previous_score = score
+
                 # Log progresso
                 elapsed = time.time() - self.start_time
                 nps = int(self.nodes_searched / elapsed) if elapsed > 0 else 0
+
+                stability_marker = f" [stable×{stable_iterations}]" if stable_iterations >= 3 else ""
 
                 print(f"depth {depth:2d} | score {score:+6.0f} | "
                       f"nodes {self.nodes_searched:,} | "
                       f"nps {nps:,} | "
                       f"time {elapsed:.1f}s | "
                       f"tt_hits {self.tt_hits:,} | "
-                      f"pv: {' '.join(pv[:5])}")
+                      f"pv: {' '.join(pv_depth[:5])}{stability_marker}")
 
             except TimeoutException:
                 print(f"⏱️  Tempo esgotado em depth {depth}")
@@ -211,8 +247,15 @@ class ProfessionalEngine:
                 best_move_str = f"{Pos64(move[0]).to_algebraic()} → {Pos64(move[1]).to_algebraic()}"
                 best_move_tuple = (move[0], move[1], tuple(), False)
 
-        # Armazenar na TT
-        if best_move_tuple:
+        # Garantir que best_score é finito
+        if abs(best_score) >= 100000:
+            # Fallback: avaliar posição estática
+            best_score = self.evaluator.evaluate_position(game)
+            if game.turn == "black":
+                best_score = -best_score
+
+        # Armazenar na TT (apenas se score for válido)
+        if best_move_tuple and abs(best_score) < 100000:
             self.tt.store(
                 zobrist_key, depth, best_score,
                 NodeType.EXACT, best_move_tuple
@@ -246,7 +289,7 @@ class ProfessionalEngine:
 
         # Probe Transposition Table
         tt_entry = self.tt.probe(zobrist_key)
-        if tt_entry and tt_entry.depth >= depth:
+        if tt_entry and tt_entry.depth >= depth and abs(tt_entry.score) < 100000:
             self.tt_hits += 1
 
             # Usar score da TT se aplicável
@@ -265,7 +308,8 @@ class ProfessionalEngine:
         if depth <= 0:
             # Quiescence Search
             if self.use_quiescence:
-                return self._quiescence(game, alpha, beta, zobrist_key), []
+                q_score = self._quiescence(game, alpha, beta, zobrist_key)
+                return q_score, []
             else:
                 score = self.evaluator.evaluate_position(game)
                 return score if game.turn == "white" else -score, []
@@ -353,8 +397,14 @@ class ProfessionalEngine:
                     self.move_ordering.update_history(move[0], move[1], depth)
                 break
 
-        # Armazenar na TT
-        if best_move_tuple:
+        # Garantir que best_score é finito
+        if abs(best_score) >= 100000:
+            # Fallback: avaliar posição estática
+            score = self.evaluator.evaluate_position(game)
+            best_score = score if game.turn == "white" else -score
+
+        # Armazenar na TT (apenas se score for válido)
+        if best_move_tuple and abs(best_score) < 100000:
             if best_score <= alpha:
                 node_type = NodeType.UPPER_BOUND
             elif best_score >= beta:
@@ -381,9 +431,11 @@ class ProfessionalEngine:
         if game.turn == "black":
             stand_pat = -stand_pat
 
-        if stand_pat >= beta:
+        # Beta cutoff (mas apenas se beta for finito)
+        if stand_pat >= beta and abs(beta) < 100000:
             return beta
 
+        # Atualizar alpha
         if alpha < stand_pat:
             alpha = stand_pat
 
@@ -407,7 +459,12 @@ class ProfessionalEngine:
             new_zobrist = self.zobrist.hash_position(game_copy)
             score = -self._quiescence(game_copy, -beta, -alpha, new_zobrist, ply + 1)
 
-            if score >= beta:
+            # Ignorar scores infinitos de chamadas recursivas
+            if abs(score) >= 100000:
+                continue
+
+            # Beta cutoff (mas apenas se beta for finito)
+            if score >= beta and abs(beta) < 100000:
                 return beta
 
             if score > alpha:

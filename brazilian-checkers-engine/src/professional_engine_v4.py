@@ -118,8 +118,10 @@ class ProfessionalEngine:
 
                 # Check 3: Mudança extrema de score (>5000 pontos)
                 if is_valid and previous_move and abs(score - previous_score) > 5000:
-                    # Permitir se for primeiro salto para endgame score
-                    if not (abs(previous_score) < 500 and abs(score) > 5000):
+                    # SEMPRE permitir se o novo score for um endgame score (±5000+)
+                    # Isso captura posições que levam a vitória forçada
+                    if abs(score) < 5000:
+                        # Score não é endgame, rejeitar mudança extrema
                         is_valid = False
                         print(f"⚠️  depth {depth}: mudança extrema de score "
                               f"({previous_score:+.0f} → {score:+.0f}), mantendo resultado anterior")

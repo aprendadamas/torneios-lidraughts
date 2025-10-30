@@ -279,14 +279,60 @@ class MoveOrdering:
         # Movimentos simples
         from_field, to_field = move[0], move[1]
 
+        # Base score
+        base_score = 0
+
         # Killer moves
         if depth in self.killer_moves:
             if (from_field, to_field) in self.killer_moves[depth]:
                 idx = self.killer_moves[depth].index((from_field, to_field))
-                return 800_000 - idx * 1000
+                base_score = 800_000 - idx * 1000
+        else:
+            # History heuristic
+            base_score = self.history.get(from_field, {}).get(to_field, 0)
 
-        # History heuristic
-        return self.history.get(from_field, {}).get(to_field, 0)
+        # NOVO: Bonus para avanço de peões (crucial para táticas de promoção!)
+        # Detectar se é avanço de peão calculando diferença de campo
+        # Sistema: campos 1-32, menores = mais avançados para brancos
+        # Brancos avançam de campos maiores para menores
+        # Pretos avançam de campos menores para maiores
+        pawn_advance_bonus = 0
+        if from_field > to_field:
+            # Branco avançando (campo diminui)
+            # Calcular quantas linhas avança
+            from_y = ((from_field - 1) // 4) + 1
+            to_y = ((to_field - 1) // 4) + 1
+            lines_advanced = from_y - to_y
+
+            # Bonus progressivo por linha - MÁXIMA PRIORIDADE!
+            if to_y == 2:  # Chegando na linha 7 (penúltima)
+                pawn_advance_bonus = 850_000  # Maior que killers!
+            elif to_y == 3:  # Chegando na linha 6
+                pawn_advance_bonus = 820_000
+            elif to_y == 4:  # Chegando na linha 5
+                pawn_advance_bonus = 810_000
+
+            # Bonus adicional para colunas centrais (mais táticas!)
+            # Campos centrais: 6,7,10,11,14,15,18,19,22,23,26,27
+            if to_field in [7, 11, 15, 19, 23, 27]:  # Colunas d/e
+                pawn_advance_bonus += 10_000
+        elif to_field > from_field:
+            # Preto avançando (campo aumenta)
+            from_y = ((from_field - 1) // 4) + 1
+            to_y = ((to_field - 1) // 4) + 1
+            lines_advanced = to_y - from_y
+
+            if to_y == 7:  # Chegando na linha 2 (penúltima para pretos)
+                pawn_advance_bonus = 850_000
+            elif to_y == 6:  # Chegando na linha 3
+                pawn_advance_bonus = 820_000
+            elif to_y == 5:  # Chegando na linha 4
+                pawn_advance_bonus = 810_000
+
+            if to_field in [6, 10, 14, 18, 22, 26]:  # Colunas d/e para pretos
+                pawn_advance_bonus += 10_000
+
+        return base_score + pawn_advance_bonus
 
     def _moves_equal(self, move1, move2, is_capture: bool) -> bool:
         """Verifica se dois movimentos são iguais"""

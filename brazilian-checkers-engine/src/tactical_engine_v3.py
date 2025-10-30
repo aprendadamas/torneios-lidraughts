@@ -205,16 +205,39 @@ class ImprovedTacticalEvaluationV3:
         # Bonus posicional
         positional = 0
 
-        # Peões avançados valem mais
+        # Peões avançados valem MUITO mais (crucial para táticas profundas)
+        # Sistema de coordenadas: y=8 (linha 1 algébrica), y=1 (linha 8 algébrica)
+        # Brancos promovem em y=1 (linha 8), pretos promovem em y=8 (linha 1)
+        # NOTA: Bonus aumentado para forçar motor a priorizar avanço de peões
         for field in game.white_men:
             pos = Pos64(field)
-            if pos.y <= 3:  # Linhas 1-3 (avançados para brancos)
-                positional += 20
+            if pos.y == 1:
+                # Linha 8: não deveria existir (promoveria imediatamente)
+                positional += 500
+            elif pos.y == 2:
+                # Linha 7: a 1 casa da promoção - EXTREMAMENTE valioso!
+                positional += 250  # Aumentado de 150 para 250
+            elif pos.y == 3:
+                # Linha 6: a 2 casas da promoção - muito valioso
+                positional += 80  # Aumentado de 50 para 80
+            elif pos.y == 4:
+                # Linha 5: avançado moderadamente
+                positional += 30  # Aumentado de 20 para 30
 
         for field in game.black_men:
             pos = Pos64(field)
-            if pos.y >= 6:  # Linhas 6-8 (avançados para pretos)
-                positional -= 20
+            if pos.y == 8:
+                # Linha 1: não deveria existir (promoveria imediatamente)
+                positional -= 500
+            elif pos.y == 7:
+                # Linha 2: a 1 casa da promoção - EXTREMAMENTE valioso!
+                positional -= 250  # Aumentado de 150 para 250
+            elif pos.y == 6:
+                # Linha 3: a 2 casas da promoção - muito valioso
+                positional -= 80  # Aumentado de 50 para 80
+            elif pos.y == 5:
+                # Linha 4: avançado moderadamente
+                positional -= 30  # Aumentado de 20 para 30
 
         # Centralização de damas
         center_fields = {18, 19, 22, 23}  # d4, e4, c5, d5 aproximadamente

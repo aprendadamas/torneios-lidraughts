@@ -314,8 +314,14 @@ class ProfessionalEngine:
                 score = self.evaluator.evaluate_position(game)
                 return score if game.turn == "white" else -score, []
 
+        # Obter movimentos (precisa verificar ANTES de null-move)
+        captures = game.find_all_captures()
+
         # Null-Move Pruning
+        # IMPORTANTE: Não usar em posições táticas (com capturas disponíveis)
+        # pois pode podar incorretamente linhas com sacrifícios profundos
         if (self.use_null_move and allow_null and depth >= 3 and
+            not captures and  # NÃO usar null-move se há capturas (posição tática)
             not self._is_in_check(game)):  # Nunca fazer null-move em check
 
             # Fazer "null move" (passar a vez)
@@ -334,8 +340,7 @@ class ProfessionalEngine:
                 # Null-move cutoff
                 return score, []
 
-        # Obter movimentos
-        captures = game.find_all_captures()
+        # Processar movimentos
         if captures:
             moves = [(cap, True) for cap in captures]
         else:

@@ -86,6 +86,10 @@ class EndgameEvaluator:
         """
         Avalia posições de final
         Retorna score especial se for final conhecido, None caso contrário
+
+        Conhecimento de finais:
+        - 1 dama vs poucos peões (≤3) = vitória forçada
+        - 1 dama vs peões bloqueados = vitória forçada (score maior)
         """
         white_total = len(game.white_men) + len(game.white_kings)
         black_total = len(game.black_men) + len(game.black_kings)
@@ -94,18 +98,40 @@ class EndgameEvaluator:
         if (len(game.white_kings) == 1 and len(game.white_men) == 0 and
             len(game.black_kings) == 0 and len(game.black_men) > 0):
 
-            # Verificar se todos os peões pretos estão bloqueados
-            blocked = EndgameEvaluator.count_blocked_pawns(game, "black")
-            if blocked == len(game.black_men):
-                return 9999  # Vitória forçada para brancas
+            num_pawns = len(game.black_men)
+
+            # 1 dama vs 1-3 peões = vitória forçada
+            if num_pawns <= 3:
+                # Verificar se peões estão bloqueados para score mais alto
+                blocked = EndgameEvaluator.count_blocked_pawns(game, "black")
+                if blocked == num_pawns:
+                    return 9999  # Peões bloqueados - vitória imediata
+                else:
+                    # Peões não bloqueados mas ainda vitória forçada
+                    # Score alto mas menor que 9999 para distinguir
+                    return 8000 + (3 - num_pawns) * 500  # 8500-9000 dependendo de quantos peões
+
+            # 1 dama vs 4+ peões = vantagem mas não vitória garantida
+            elif num_pawns <= 6:
+                return 5000  # Grande vantagem
 
         # Final: 1 dama preta vs apenas peões brancos
         if (len(game.black_kings) == 1 and len(game.black_men) == 0 and
             len(game.white_kings) == 0 and len(game.white_men) > 0):
 
-            blocked = EndgameEvaluator.count_blocked_pawns(game, "white")
-            if blocked == len(game.white_men):
-                return -9999  # Vitória forçada para pretas
+            num_pawns = len(game.white_men)
+
+            # 1 dama vs 1-3 peões = vitória forçada
+            if num_pawns <= 3:
+                blocked = EndgameEvaluator.count_blocked_pawns(game, "white")
+                if blocked == num_pawns:
+                    return -9999
+                else:
+                    return -(8000 + (3 - num_pawns) * 500)
+
+            # 1 dama vs 4+ peões = vantagem
+            elif num_pawns <= 6:
+                return -5000
 
         return None  # Não é um final conhecido
 
